@@ -20,6 +20,11 @@ CLAUDE_MODEL = "claude-3-5-sonnet-20241022"
 MAX_TOKENS = 4000
 TIMEOUT_SECONDS = 30
 
+# ──────────────────────────────────────────────
+# Groq Settings (Free Tier)
+# ──────────────────────────────────────────────
+GROQ_MODEL = "llama-3.3-70b-versatile"  # Free, high-quality model on Groq
+
 
 def get_api_key() -> str | None:
     """Retrieve GEMINI_API_KEY from environment variables."""
@@ -49,16 +54,32 @@ def is_anthropic_configured() -> bool:
     return bool(key and len(key) > 5)
 
 
+def get_groq_api_key() -> str | None:
+    """Retrieve GROQ_API_KEY from environment variables."""
+    key = os.getenv("GROQ_API_KEY")
+    if key:
+        key = key.strip()
+    return key if key else None
+
+
+def is_groq_configured() -> bool:
+    """Check if Groq API key is present and non-empty."""
+    key = get_groq_api_key()
+    return bool(key and len(key) > 5)
+
+
 def get_active_provider() -> str:
     """
     Determine which AI provider is available.
-    Returns 'anthropic' if Claude is configured, 'gemini' if Gemini is configured,
-    or 'none' if neither is available.
+    Priority: Groq (free) > Gemini > Anthropic.
+    Returns 'groq', 'gemini', 'anthropic', or 'none'.
     """
-    if is_anthropic_configured():
-        return "anthropic"
+    if is_groq_configured():
+        return "groq"
     if is_api_key_configured():
         return "gemini"
+    if is_anthropic_configured():
+        return "anthropic"
     return "none"
 
 

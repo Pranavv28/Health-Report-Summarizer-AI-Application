@@ -18,6 +18,7 @@ from config import (
     get_anthropic_api_key,
     is_anthropic_configured,
     is_api_key_configured,
+    is_groq_configured,
     CLAUDE_MODEL,
     MAX_TOKENS,
     TIMEOUT_SECONDS,
@@ -108,28 +109,39 @@ class MedicalSummarizer:
     def __init__(self) -> None:
         """Initialize the summarizer with the available AI provider."""
         self._provider: str = "none"
+        self._groq_summarizer: Any = None
         self._claude_client: Any = None
         self._gemini_analyzer: Any = None
         self._gemini_client: Any = None
 
-        # Prefer Gemini (free tier) — use Anthropic only if explicitly configured
-        if is_api_key_configured():
+        # 1. Try Groq first (free tier, no billing required)
+        if is_groq_configured():
+            try:
+                from groq_engine import GroqSummarizer
+                self._groq_summarizer = GroqSummarizer()
+                self._provider = "groq"
+                logger.info("MedicalSummarizer initialized with Groq (free tier).")
+            except Exception as e:
+                logger.error(f"Groq initialization failed: {e}")
+
+        # 2. Try Gemini (free tier)
+        if self._provider == "none" and is_api_key_configured():
             try:
                 from gemini_engine import HealthReportAnalyzer
                 from google import genai
-                from config import get_api_key, MODEL_NAME
+                from config import get_api_key
 
                 self._gemini_analyzer = HealthReportAnalyzer()
                 self._gemini_client = genai.Client(api_key=get_api_key())
                 self._provider = "gemini"
-                logger.info("MedicalSummarizer initialized with Google Gemini (free tier).")
+                logger.info("MedicalSummarizer initialized with Google Gemini.")
             except Exception as e:
                 logger.error(f"Gemini initialization failed: {e}")
 
+        # 3. Try Anthropic Claude (paid)
         if self._provider == "none" and is_anthropic_configured():
             try:
                 from anthropic import Anthropic
-
                 self._claude_client = Anthropic(
                     api_key=get_anthropic_api_key(),
                     timeout=TIMEOUT_SECONDS,
@@ -141,7 +153,8 @@ class MedicalSummarizer:
 
         if self._provider == "none":
             raise ValueError(
-                "No AI provider configured. Please set GEMINI_API_KEY in your .env file."
+                "No AI provider configured. Please set GROQ_API_KEY in your .env file.\n"
+                "Get a free key at: https://console.groq.com"
             )
 
     @property
@@ -195,7 +208,9 @@ class MedicalSummarizer:
                 )
 
         # Route to the appropriate provider
-        if self._provider == "gemini":
+        if self._provider == "groq":
+            return self._groq_summarizer.summarize(report_text, summary_type)
+        elif self._provider == "gemini":
             return self._summarize_with_gemini(report_text, source, file_type, summary_type)
         else:
             return self._summarize_with_claude(report_text, summary_type)
