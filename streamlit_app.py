@@ -448,14 +448,14 @@ CSS = """
     }
     .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ─── Radio Button Fix: Force visible label text ─── */
-    [data-testid="stRadio"] label {
-        color: #334155 !important;
-        font-size: 0.88rem !important;
-        font-weight: 600 !important;
-    }
+    /* ─── Radio Button High-Contrast Fix ─── */
+    [data-testid="stRadio"] label,
+    [data-testid="stRadio"] label p,
+    [data-testid="stRadio"] label span,
     [data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
-        color: #334155 !important;
+        color: #0f172a !important;
+        font-size: 0.92rem !important;
+        font-weight: 700 !important;
     }
     /* Selected radio dot colour */
     [data-testid="stRadio"] [role="radio"][aria-checked="true"] {
@@ -466,21 +466,21 @@ CSS = """
     .summary-mode-row [data-testid="stRadio"] > div {
         display: flex;
         flex-direction: row;
-        gap: 8px;
+        gap: 10px;
         flex-wrap: wrap;
     }
     .summary-mode-row [data-testid="stRadio"] label {
-        background: #f1f5f9;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 999px;
-        padding: 5px 16px !important;
+        background: #ffffff !important;
+        border: 2px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+        padding: 8px 18px !important;
         cursor: pointer;
-        transition: all 0.15s;
+        transition: all 0.15s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     }
-    .summary-mode-row [data-testid="stRadio"] label:has(input:checked) {
-        background: var(--jotform-blue-light) !important;
+    .summary-mode-row [data-testid="stRadio"] label:hover {
         border-color: var(--jotform-blue) !important;
-        color: var(--jotform-blue) !important;
+        background: var(--jotform-blue-light) !important;
     }
 
     /* Jotform Orange / Blue Action Buttons */
@@ -642,6 +642,12 @@ if "last_analysis_time" not in st.session_state:
     st.session_state.last_analysis_time = 0
 if "input_text_val" not in st.session_state:
     st.session_state.input_text_val = ""
+if "uploaded_file_bytes" not in st.session_state:
+    st.session_state.uploaded_file_bytes = None
+if "uploaded_file_name" not in st.session_state:
+    st.session_state.uploaded_file_name = None
+if "uploaded_file_type" not in st.session_state:
+    st.session_state.uploaded_file_type = "pdf"
 
 # Provider detection
 active_provider = get_active_provider()
@@ -730,19 +736,20 @@ col_intake, col_output = st.columns([1, 1.4], gap="large")
 # LEFT PANEL: Jotform Agent Data Intake
 # ══════════════════════════════════════════════════════════════════════════════
 with col_intake:
-    st.markdown("""
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
-                padding:16px 20px; margin-bottom:16px; box-shadow:0 2px 6px rgba(10,21,38,0.04);">
+    st_html("""
+    <div style="background: linear-gradient(135deg, #0a1526 0%, #1e293b 100%);
+                border-radius:14px; padding:16px 20px; margin-bottom:16px;
+                border:1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(10,21,38,0.15);">
         <div style="display:flex; align-items:center; justify-content:space-between;">
-            <h3 style="font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:700;
-                       color:#0a1526; margin:0; display:flex; align-items:center; gap:8px;">
+            <h3 style="font-family:'Outfit',sans-serif; font-size:1.15rem; font-weight:800;
+                       color:#ffffff; margin:0; display:flex; align-items:center; gap:10px;">
                 📥 Diagnostic Data Ingestion
             </h3>
-            <span style="font-size:11px; font-weight:700; color:#0066ff; background:#e6f0ff;
-                         padding:3px 10px; border-radius:999px;">Agent Intake Form</span>
+            <span style="font-size:11px; font-weight:800; color:#0066ff; background:#ffffff;
+                         padding:4px 12px; border-radius:999px; text-transform:uppercase; letter-spacing:0.05em;">Agent Intake Form</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     tab_file, tab_text, tab_samples = st.tabs([
         "📤 Upload Report",
@@ -756,23 +763,27 @@ with col_intake:
     trigger_sample = False
 
     with tab_file:
-        st.markdown("<p style='font-size:0.85rem; color:#64748b; margin:10px 0 8px;'>Upload scanned blood tests, CBC, or metabolic PDFs/Images:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.88rem; font-weight:600; color:#1e293b; margin:10px 0 8px;'>Upload scanned blood tests, CBC, or metabolic PDFs/Images:</p>", unsafe_allow_html=True)
         uploaded_file = st.file_uploader(
             "Drop your medical report file here",
             type=["pdf", "png", "jpg", "jpeg", "txt"],
             help="Files are processed transiently in-memory and never saved to disk."
         )
         if uploaded_file:
-            file_to_process = uploaded_file.getvalue()
+            st.session_state.uploaded_file_bytes = uploaded_file.getvalue()
+            st.session_state.uploaded_file_name = uploaded_file.name
             ext = uploaded_file.name.split(".")[-1].lower()
-            file_type = "pdf" if ext == "pdf" else ("text" if ext == "txt" else ext)
-            st.markdown(f"""
-            <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:10px 14px; font-size:0.82rem; color:#047857; margin-top:8px;">
-                ✓ <strong>{uploaded_file.name}</strong> uploaded successfully.
-            </div>""", unsafe_allow_html=True)
+            st.session_state.uploaded_file_type = "pdf" if ext == "pdf" else ("text" if ext == "txt" else ext)
+            file_to_process = st.session_state.uploaded_file_bytes
+            file_type = st.session_state.uploaded_file_type
+
+            st_html(f"""
+            <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:10px 14px; font-size:0.88rem; color:#047857; margin-top:8px; font-weight:600;">
+                ✓ <strong>{uploaded_file.name}</strong> uploaded successfully and ready for analysis.
+            </div>""")
 
     with tab_text:
-        st.markdown("<p style='font-size:0.85rem; color:#64748b; margin:10px 0 8px;'>Paste raw medical report text or lab metrics:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.88rem; font-weight:600; color:#1e293b; margin:10px 0 8px;'>Paste raw medical report text or lab metrics:</p>", unsafe_allow_html=True)
         pasted_text = st.text_area(
             "Report Content Text",
             height=200,
@@ -782,10 +793,11 @@ with col_intake:
         )
         if pasted_text.strip():
             text_to_process = pasted_text.strip()
+            st.session_state.input_text_val = text_to_process
             file_type = "text"
 
     with tab_samples:
-        st.markdown("<p style='font-size:0.85rem; color:#64748b; margin:10px 0 8px;'>Evaluate using pre-configured clinical case studies:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.88rem; font-weight:600; color:#1e293b; margin:10px 0 8px;'>Evaluate using pre-configured clinical case studies:</p>", unsafe_allow_html=True)
         sample_choice = st.radio(
             "Choose a sample case study",
             options=list(SAMPLE_REPORTS.keys()),
@@ -802,18 +814,19 @@ with col_intake:
         with col_s2:
             if st.button("⚡ 1-Click Analyze Sample", use_container_width=True):
                 text_to_process = SAMPLE_REPORTS[sample_choice]
+                st.session_state.input_text_val = text_to_process
                 file_type = "text"
                 trigger_sample = True
 
-    st.markdown("""
-    <div style='margin:18px 0 6px; padding:10px 14px; background:#f8fafc;
-                border:1px solid #e2e8f0; border-radius:10px;'>
-        <p style='font-size:0.78rem; font-weight:700; color:#64748b;
-                  text-transform:uppercase; letter-spacing:0.06em; margin:0 0 8px;'>
-            📊 Summary Mode
+    st_html("""
+    <div style='margin:18px 0 8px; padding:10px 14px; background:#f8fafc;
+                border:1px solid #cbd5e1; border-radius:10px;'>
+        <p style='font-size:0.85rem; font-weight:800; color:#0f172a;
+                  text-transform:uppercase; letter-spacing:0.06em; margin:0;'>
+            📊 Select Summary Mode
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """)
     with st.container():
         st.markdown('<div class="summary-mode-row">', unsafe_allow_html=True)
         summary_type = st.radio(
@@ -828,13 +841,23 @@ with col_intake:
     # Strip emoji prefix for backend
     summary_type = summary_type.split(" ", 1)[1] if " " in summary_type else summary_type
 
-    st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
     run_agent_btn = st.button("🚀 Analyze Report", use_container_width=True, type="primary")
 
     # Trigger analysis if button clicked OR 1-Click Analyze Sample clicked
     if run_agent_btn or trigger_sample:
-        input_data = file_to_process if file_to_process else text_to_process
-        if not input_data and st.session_state.input_text_val:
+        input_data = None
+        # Priority: file uploaded in file_uploader -> session_state uploaded_file -> text_to_process -> session_state input_text_val
+        if file_to_process:
+            input_data = file_to_process
+            file_type = file_type
+        elif st.session_state.get("uploaded_file_bytes"):
+            input_data = st.session_state.uploaded_file_bytes
+            file_type = st.session_state.uploaded_file_type
+        elif text_to_process:
+            input_data = text_to_process
+            file_type = "text"
+        elif st.session_state.input_text_val:
             input_data = st.session_state.input_text_val
             file_type = "text"
 
@@ -888,11 +911,11 @@ with col_intake:
                         st.error(f"❌ Analysis Failed: {str(err) or repr(err)}")
                         st.info("💡 Tip: Ensure your PDF is not password-protected and contains readable laboratory text or values.")
 
-    st.markdown(f"""
-    <div style="font-size:11px; color:#94a3b8; text-align:center; margin-top:16px;">
-        Powered by Jotform Agent Builder & {provider_display_name} Engine
+    st_html(f"""
+    <div style="font-size:0.85rem; font-weight:700; color:#334155; background:#ffffff; border:1px solid #cbd5e1; padding:10px 16px; border-radius:12px; text-align:center; margin-top:20px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+        ⚡ Powered by <strong style="color:#ff6100;">Jotform Agent Builder</strong> & <strong style="color:#0066ff;">{provider_display_name}</strong> Engine
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -983,25 +1006,23 @@ with col_output:
         st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
 
         # Executive Summary Narrative
-        st.markdown("""
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
-                    padding:18px 20px; margin-bottom:16px; box-shadow:0 2px 6px rgba(10,21,38,0.04);">
+        st_html(f"""
+        <div style="background: #ffffff; border: 2px solid #0066ff; border-radius: 16px;
+                    padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,102,255,0.08);">
             <div style="display:flex; align-items:center; justify-content:space-between;
-                        margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #e2e8f0;">
-                <h3 style="font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:700;
-                           color:#0a1526; margin:0; display:flex; align-items:center; gap:8px;">
+                        margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+                <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800;
+                           color:#0a1526; margin:0; display:flex; align-items:center; gap:10px;">
                     📋 Executive Diagnostic Synthesis
                 </h3>
+                <span style="font-size:11px; font-weight:800; color:#0066ff; background:#e6f0ff;
+                             padding:4px 12px; border-radius:999px;">Clinical Overview</span>
+            </div>
+            <div style="font-size:1.02rem; color:#1e293b; line-height:1.7; font-weight:500;">
+                {analysis.patient_summary}
             </div>
         </div>
-        """, unsafe_allow_html=True)
-        st.markdown(f"""
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0066ff;
-                    border-radius:10px; padding:16px 18px; font-size:0.95rem; color:#334155;
-                    line-height:1.65; margin-bottom:16px;">
-            {analysis.patient_summary}
-        </div>
-        """, unsafe_allow_html=True)
+        """)
 
         # Tabbed Views: Structured Sections
         out_tab1, out_tab2, out_tab3, out_tab4, out_tab5 = st.tabs([
