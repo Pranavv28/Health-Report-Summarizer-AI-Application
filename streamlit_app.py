@@ -537,19 +537,10 @@ CSS = """
         background: var(--jotform-blue-light) !important;
     }
 
-    /* ─── Sticky Left Intake Panel ─── */
+    /* ─── Left Intake Panel: normal scroll, no sticky clip ─── */
     [data-testid="stHorizontalBlock"] > div:first-child {
-        position: sticky;
-        top: 1rem;
         align-self: flex-start;
-        max-height: calc(100vh - 2rem);
-        overflow-y: auto;
-        overflow-x: hidden;
-        scrollbar-width: thin;
-        scrollbar-color: #cbd5e1 transparent;
     }
-    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar { width: 5px; }
-    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
     /* ─── Empty State Placeholder ─── */
     .empty-agent-state {
@@ -726,18 +717,19 @@ col_intake, col_output = st.columns([1, 1.4], gap="large")
 # LEFT PANEL: Jotform Agent Data Intake
 # ══════════════════════════════════════════════════════════════════════════════
 with col_intake:
-    st_html("""
-    <div class="jotform-card">
-        <div class="card-title-bar">
-            <h3 class="card-title-text">
-                <span>📥</span> Diagnostic Data Ingestion
+    st.markdown("""
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
+                padding:16px 20px; margin-bottom:16px; box-shadow:0 2px 6px rgba(10,21,38,0.04);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <h3 style="font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:700;
+                       color:#0a1526; margin:0; display:flex; align-items:center; gap:8px;">
+                📥 Diagnostic Data Ingestion
             </h3>
-            <span style="font-size:11px; font-weight:700; color:#0066ff; background:#e6f0ff; padding:3px 10px; border-radius:999px;">
-                Agent Intake Form
-            </span>
+            <span style="font-size:11px; font-weight:700; color:#0066ff; background:#e6f0ff;
+                         padding:3px 10px; border-radius:999px;">Agent Intake Form</span>
         </div>
     </div>
-    """)
+    """, unsafe_allow_html=True)
 
     tab_file, tab_text, tab_samples = st.tabs([
         "📤 Upload Report",
@@ -978,19 +970,25 @@ with col_output:
         st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
 
         # Executive Summary Narrative
-        st_html(f"""
-        <div class="jotform-card">
-            <div class="card-title-bar">
-                <h3 class="card-title-text">
-                    <span>📋</span> Executive Diagnostic Synthesis
+        st.markdown("""
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
+                    padding:18px 20px; margin-bottom:16px; box-shadow:0 2px 6px rgba(10,21,38,0.04);">
+            <div style="display:flex; align-items:center; justify-content:space-between;
+                        margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #e2e8f0;">
+                <h3 style="font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:700;
+                           color:#0a1526; margin:0; display:flex; align-items:center; gap:8px;">
+                    📋 Executive Diagnostic Synthesis
                 </h3>
-                <span class="badge-elevated">{analysis.report_title or 'Health Report Summary'}</span>
-            </div>
-            <div class="executive-narrative">
-                {analysis.patient_summary}
             </div>
         </div>
-        """)
+        """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0066ff;
+                    border-radius:10px; padding:16px 18px; font-size:0.95rem; color:#334155;
+                    line-height:1.65; margin-bottom:16px;">
+            {analysis.patient_summary}
+        </div>
+        """, unsafe_allow_html=True)
 
         # Tabbed Views: Structured Sections
         out_tab1, out_tab2, out_tab3, out_tab4, out_tab5 = st.tabs([
