@@ -423,28 +423,44 @@ CSS = """
         flex-shrink: 0;
     }
 
-    /* ─── Streamlit UI Controls Customization ─── */
+    /* ─── Streamlit UI Controls Customization: High Contrast Tabs ─── */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 6px;
-        background: #e2e8f0;
-        padding: 4px;
-        border-radius: var(--radius-md);
+        gap: 8px !important;
+        background: #e2e8f0 !important;
+        padding: 6px !important;
+        border-radius: 12px !important;
+        margin-bottom: 16px !important;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 38px;
-        border-radius: var(--radius-sm);
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.85rem;
-        border: none !important;
-        padding: 0 16px;
-        background: transparent;
+        height: 42px !important;
+        border-radius: 8px !important;
+        padding: 0 16px !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        transition: all 0.15s ease !important;
+    }
+    .stTabs [data-baseweb="tab"] p,
+    .stTabs [data-baseweb="tab"] span,
+    .stTabs [data-baseweb="tab"] div {
+        color: #334155 !important;
+        font-weight: 700 !important;
+        font-size: 0.9rem !important;
+    }
+    .stTabs [data-baseweb="tab"]:hover {
+        background: #f1f5f9 !important;
+        border-color: #94a3b8 !important;
     }
     .stTabs [aria-selected="true"] {
-        background: var(--surface) !important;
-        color: var(--jotform-blue) !important;
-        box-shadow: var(--shadow-sm);
-        font-weight: 700 !important;
+        background: #0066ff !important;
+        border-color: #0066ff !important;
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25) !important;
+    }
+    .stTabs [aria-selected="true"] p,
+    .stTabs [aria-selected="true"] span,
+    .stTabs [aria-selected="true"] div {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 0.9rem !important;
     }
     .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
