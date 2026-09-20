@@ -427,7 +427,7 @@ CSS = """
         flex-shrink: 0;
     }
 
-    /* ─── Streamlit UI Controls Customization: High Contrast Tabs ─── */
+    /* ─── Streamlit UI Controls Customization: High Contrast BaseWeb Tabs ─── */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px !important;
         background: #cbd5e1 !important;
@@ -435,7 +435,8 @@ CSS = """
         border-radius: 12px !important;
         margin-bottom: 16px !important;
     }
-    .stTabs [data-baseweb="tab"] {
+    .stTabs [data-baseweb="tab"],
+    .stTabs button[role="tab"] {
         height: 44px !important;
         border-radius: 10px !important;
         padding: 0 18px !important;
@@ -444,28 +445,44 @@ CSS = """
         box-shadow: 0 2px 5px rgba(0,0,0,0.04) !important;
         transition: all 0.15s ease !important;
     }
+    .stTabs [data-baseweb="tab"] *,
+    .stTabs button[role="tab"] *,
     .stTabs [data-baseweb="tab"] p,
     .stTabs [data-baseweb="tab"] span,
-    .stTabs [data-baseweb="tab"] div {
+    .stTabs [data-baseweb="tab"] div,
+    div[data-baseweb="tab-list"] button p,
+    div[data-baseweb="tab-list"] button span,
+    div[data-baseweb="tab-list"] button div {
         color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
         font-weight: 800 !important;
-        font-size: 0.92rem !important;
+        font-size: 0.95rem !important;
+        opacity: 1 !important;
     }
-    .stTabs [data-baseweb="tab"]:hover {
+    .stTabs [data-baseweb="tab"]:hover,
+    .stTabs button[role="tab"]:hover {
         background: #f0f6ff !important;
         border-color: #0066ff !important;
     }
-    .stTabs [aria-selected="true"] {
+    .stTabs [aria-selected="true"],
+    .stTabs button[role="tab"][aria-selected="true"] {
         background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%) !important;
         border-color: #0066ff !important;
         box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3) !important;
     }
+    .stTabs [aria-selected="true"] *,
+    .stTabs button[role="tab"][aria-selected="true"] *,
     .stTabs [aria-selected="true"] p,
     .stTabs [aria-selected="true"] span,
-    .stTabs [aria-selected="true"] div {
+    .stTabs [aria-selected="true"] div,
+    div[data-baseweb="tab-list"] button[aria-selected="true"] p,
+    div[data-baseweb="tab-list"] button[aria-selected="true"] span,
+    div[data-baseweb="tab-list"] button[aria-selected="true"] div {
         color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
         font-weight: 800 !important;
-        font-size: 0.92rem !important;
+        font-size: 0.95rem !important;
+        opacity: 1 !important;
     }
     .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
