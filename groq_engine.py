@@ -117,6 +117,11 @@ class GroqSummarizer:
         mode_prompt = config["prompt"]
         model_cls = config["model_cls"]
 
+        # Truncate text if too long to avoid HTTP 413 (Entity Too Large)
+        MAX_INPUT_CHARS = 12000
+        if len(report_text) > MAX_INPUT_CHARS:
+            report_text = report_text[:MAX_INPUT_CHARS] + "\n... [Report text truncated for LLM limits]"
+
         user_message = (
             f"{mode_prompt}\n\n--- MEDICAL REPORT ---\n{report_text}\n--- END REPORT ---"
         )
@@ -126,16 +131,21 @@ class GroqSummarizer:
         for model in GROQ_MODEL_FALLBACKS:
             for attempt in range(3):
                 try:
-                    response = self._client.chat.completions.create(
-                        model=model,
-                        messages=[
+                    kwargs = {
+                        "model": model,
+                        "messages": [
                             {"role": "system", "content": ANALYSIS_SYSTEM_INSTRUCTION},
                             {"role": "user",   "content": user_message},
                         ],
-                        max_tokens=MAX_TOKENS,
-                        temperature=0.1,
-                        response_format={"type": "json_object"},
-                    )
+                        "max_tokens": MAX_TOKENS,
+                        "temperature": 0.1,
+                    }
+                    try:
+                        response = self._client.chat.completions.create(
+                            **kwargs, response_format={"type": "json_object"}
+                        )
+                    except Exception:
+                        response = self._client.chat.completions.create(**kwargs)
 
                     raw_text = response.choices[0].message.content or ""
                     cleaned = raw_text.strip()
@@ -163,7 +173,7 @@ class GroqSummarizer:
                         time.sleep(wait)
                         continue
                     else:
-                        logger.error("Groq non-retryable error with model %s: %s", model, e)
+                        logger.error("Groq error with model %s: %s", model, e)
                         break  # Try next model
 
         raise RuntimeError(

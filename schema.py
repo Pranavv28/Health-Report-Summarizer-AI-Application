@@ -6,8 +6,8 @@ biomarkers, medical term translations, and summary modes
 (Brief, Detailed, Highlighted).
 """
 
-from typing import Optional, List
-from pydantic import BaseModel, Field, model_validator
+from typing import Optional, List, Any
+from pydantic import BaseModel, Field, model_validator, field_validator
 
 
 class Biomarker(BaseModel):
@@ -32,6 +32,13 @@ class Biomarker(BaseModel):
         description="Brief 1-sentence explanation of what this biomarker measures"
     )
 
+    @field_validator("parameter_name", "value", "unit", "reference_range", "status", "simple_explanation", mode="before")
+    @classmethod
+    def coerce_to_string(cls, v: Any) -> str:
+        if v is None:
+            return ""
+        return str(v)
+
 
 class MedicalTermTranslation(BaseModel):
     """A medical jargon term decoded into plain English."""
@@ -42,6 +49,13 @@ class MedicalTermTranslation(BaseModel):
     plain_english: str = Field(
         description="Plain English definition and what it means for the patient"
     )
+
+    @field_validator("term", "plain_english", mode="before")
+    @classmethod
+    def coerce_to_string(cls, v: Any) -> str:
+        if v is None:
+            return ""
+        return str(v)
 
 
 class HealthReportAnalysis(BaseModel):
@@ -109,6 +123,13 @@ class HealthReportAnalysis(BaseModel):
         default_factory=list,
         description="Alias for lifestyle_wellness_educational_tips — LLMs may return this key directly"
     )
+
+    @field_validator("patient_name", "patient_age", "patient_gender", "test_date", "report_title", "patient_summary", mode="before")
+    @classmethod
+    def coerce_opt_string(cls, v: Any) -> Optional[str]:
+        if v is None:
+            return None
+        return str(v)
 
     @model_validator(mode="after")
     def merge_recommendations(self) -> "HealthReportAnalysis":
