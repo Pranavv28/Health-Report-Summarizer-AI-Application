@@ -555,6 +555,32 @@ CSS = """
         font-size: 3rem;
         margin-bottom: 12px;
     }
+
+    /* ─── High Contrast Spinner & Status Widget Fix ─── */
+    [data-testid="stStatusWidget"],
+    [data-testid="stSpinner"],
+    .stSpinner {
+        color: #0a1526 !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+        padding: 12px 18px !important;
+        margin: 12px 0 !important;
+        box-shadow: 0 4px 12px rgba(10,21,38,0.08) !important;
+    }
+    [data-testid="stStatusWidget"] p,
+    [data-testid="stStatusWidget"] span,
+    [data-testid="stStatusWidget"] div,
+    [data-testid="stSpinner"] p,
+    [data-testid="stSpinner"] span,
+    [data-testid="stSpinner"] div,
+    .stSpinner p,
+    .stSpinner span,
+    .stSpinner div {
+        color: #0a1526 !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+    }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
