@@ -622,6 +622,29 @@ CSS = """
         font-weight: 700 !important;
         font-size: 0.95rem !important;
     }
+
+    /* ─── Chat Message High Contrast & Font Size Fix ─── */
+    [data-testid="stChatMessage"] {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        margin-bottom: 10px !important;
+        box-shadow: 0 2px 6px rgba(10,21,38,0.04) !important;
+    }
+    [data-testid="stChatMessage"] p,
+    [data-testid="stChatMessage"] span,
+    [data-testid="stChatMessage"] div,
+    [data-testid="stChatMessageContent"] {
+        color: #0f172a !important;
+        font-size: 0.92rem !important;
+        font-weight: 500 !important;
+        line-height: 1.6 !important;
+    }
+    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+        background-color: #f0f6ff !important;
+        border-color: #bae6fd !important;
+    }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -1170,27 +1193,59 @@ with col_output:
                     </div>""")
 
         with out_tab5:
-            st.markdown("<p style='font-size:0.85rem; color:#64748b; margin-bottom:12px;'>Chat directly with your Jotform Medical AI Agent about your results:</p>", unsafe_allow_html=True)
-            for msg in st.session_state.chat_history:
-                with st.chat_message(msg["role"]):
-                    st.write(msg["content"])
+            st_html("""
+            <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; padding:14px 18px; margin-bottom:14px;">
+                <h4 style="font-family:var(--font-display); font-size:1.05rem; font-weight:700; color:#0a1526; margin:0 0 4px; display:flex; align-items:center; gap:8px;">
+                    🤖 Ask Your Jotform Medical AI Agent
+                </h4>
+                <p style="font-size:0.85rem; color:#475569; margin:0;">
+                    Ask any follow-up question about your lab results, abnormal biomarkers, or doctor consultation.
+                </p>
+            </div>
+            """)
 
-            user_q = st.chat_input("Ask a follow-up question (e.g. 'How can I lower my LDL cholesterol?')")
+            # 1-Click Suggested Questions
+            q1, q2, q3 = st.columns(3)
+            suggested_q = None
+            with q1:
+                if st.button("💡 How to lower high levels?", use_container_width=True):
+                    suggested_q = "How can I lower my abnormal biomarker levels through diet and lifestyle?"
+            with q2:
+                if st.button("🩺 Questions for my doctor?", use_container_width=True):
+                    suggested_q = "What key questions should I ask my physician about these report findings?"
+            with q3:
+                if st.button("💊 Medication considerations?", use_container_width=True):
+                    suggested_q = "Are there any specific medications or treatments I should discuss with my doctor?"
+
+            st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
+            # Compact Fixed-Height Scrollable Chat Box
+            chat_box = st.container(height=320)
+            with chat_box:
+                if not st.session_state.chat_history:
+                    st_html("""
+                    <div style="text-align:center; padding:30px 10px; color:#64748b; font-size:0.88rem;">
+                        💬 No messages yet. Select a prompt above or type your question below!
+                    </div>
+                    """)
+                else:
+                    for msg in st.session_state.chat_history:
+                        with st.chat_message(msg["role"]):
+                            st.write(msg["content"])
+
+            user_q = st.chat_input("Ask a follow-up question...") or suggested_q
             if user_q:
                 st.session_state.chat_history.append({"role": "user", "content": user_q})
-                with st.chat_message("user"):
-                    st.write(user_q)
-                with st.chat_message("assistant"):
-                    with st.spinner("Jotform Medical Agent is formulating response..."):
-                        summarizer = MedicalSummarizer()
-                        ctx = f"Report Title: {analysis.report_title}\nSummary: {analysis.patient_summary}\nFindings: {analysis.key_findings}"
-                        reply = summarizer.answer_health_question(
-                            report_summary=ctx,
-                            user_question=user_q,
-                            chat_history=st.session_state.chat_history
-                        )
-                        st.write(reply)
-                        st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                with st.spinner("Jotform Medical Agent is formulating response..."):
+                    summarizer = MedicalSummarizer()
+                    ctx = f"Report Title: {analysis.report_title}\nSummary: {analysis.patient_summary}\nFindings: {analysis.key_findings}"
+                    reply = summarizer.answer_health_question(
+                        report_summary=ctx,
+                        user_question=user_q,
+                        chat_history=st.session_state.chat_history
+                    )
+                    st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                st.rerun()
 
         # ── EXPORT ACTION BUTTONS ──
         st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
