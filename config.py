@@ -1,11 +1,25 @@
 import os
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv(override=True)
 
-# Gemini Model Settings
-MODEL_NAME = "gemini-3.6-flash"
+logger = logging.getLogger(__name__)
+
+# ──────────────────────────────────────────────
+# Google Gemini Settings
+# ──────────────────────────────────────────────
+GEMINI_MODEL_NAME = "gemini-3.6-flash"
+MODEL_NAME = GEMINI_MODEL_NAME  # Backward compatibility alias
+
+# ──────────────────────────────────────────────
+# Anthropic Claude Settings
+# ──────────────────────────────────────────────
+CLAUDE_MODEL = "claude-3-5-sonnet-20241022"
+MAX_TOKENS = 4000
+TIMEOUT_SECONDS = 30
+
 
 def get_api_key() -> str | None:
     """Retrieve GEMINI_API_KEY from environment variables."""
@@ -14,10 +28,39 @@ def get_api_key() -> str | None:
         key = key.strip()
     return key if key else None
 
+
 def is_api_key_configured() -> bool:
-    """Check if API key is present and non-empty."""
+    """Check if Gemini API key is present and non-empty."""
     key = get_api_key()
     return bool(key and len(key) > 5)
+
+
+def get_anthropic_api_key() -> str | None:
+    """Retrieve ANTHROPIC_API_KEY from environment variables."""
+    key = os.getenv("ANTHROPIC_API_KEY")
+    if key:
+        key = key.strip()
+    return key if key else None
+
+
+def is_anthropic_configured() -> bool:
+    """Check if Anthropic API key is present and non-empty."""
+    key = get_anthropic_api_key()
+    return bool(key and len(key) > 5)
+
+
+def get_active_provider() -> str:
+    """
+    Determine which AI provider is available.
+    Returns 'anthropic' if Claude is configured, 'gemini' if Gemini is configured,
+    or 'none' if neither is available.
+    """
+    if is_anthropic_configured():
+        return "anthropic"
+    if is_api_key_configured():
+        return "gemini"
+    return "none"
+
 
 # Built-in Sample Reports for 1-click testing
 SAMPLE_REPORTS = {

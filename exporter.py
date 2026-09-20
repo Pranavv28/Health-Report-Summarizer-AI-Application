@@ -1,9 +1,39 @@
 import io
+import json
+from typing import Any
+
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from schema import HealthReportAnalysis
+
+
+def generate_json_export(analysis: HealthReportAnalysis) -> str:
+    """
+    Generate a structured JSON string from a HealthReportAnalysis instance.
+
+    Args:
+        analysis: Parsed health report analysis model.
+
+    Returns:
+        Pretty-printed JSON string of the analysis.
+    """
+    return analysis.model_dump_json(indent=2)
+
+
+def generate_json_dict(analysis: HealthReportAnalysis) -> dict[str, Any]:
+    """
+    Generate a dictionary from a HealthReportAnalysis instance.
+
+    Args:
+        analysis: Parsed health report analysis model.
+
+    Returns:
+        Dictionary representation of the analysis.
+    """
+    return analysis.model_dump()
+
 
 def generate_pdf_report(analysis: HealthReportAnalysis) -> bytes:
     """Generate a downloadable PDF bytes buffer from a HealthReportAnalysis instance."""
