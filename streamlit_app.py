@@ -537,9 +537,34 @@ CSS = """
         background: var(--jotform-blue-light) !important;
     }
 
-    /* ─── Left Intake Panel: normal scroll, no sticky clip ─── */
-    [data-testid="stHorizontalBlock"] > div:first-child {
-        align-self: flex-start;
+    /* ─── Left Intake Panel: Sticky Sidebar ─── */
+    [data-testid="stHorizontalBlock"] > div:first-child,
+    [data-testid="column"]:first-child,
+    div[data-testid="stColumn"]:first-child {
+        position: sticky !important;
+        top: 1rem !important;
+        align-self: flex-start !important;
+        max-height: calc(100vh - 2rem) !important;
+        overflow-y: auto !important;
+        padding-right: 4px !important;
+    }
+
+    /* Custom subtle thin scrollbar for sticky left intake panel */
+    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar,
+    [data-testid="column"]:first-child::-webkit-scrollbar,
+    div[data-testid="stColumn"]:first-child::-webkit-scrollbar {
+        width: 4px;
+    }
+    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar-track,
+    [data-testid="column"]:first-child::-webkit-scrollbar-track,
+    div[data-testid="stColumn"]:first-child::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar-thumb,
+    [data-testid="column"]:first-child::-webkit-scrollbar-thumb,
+    div[data-testid="stColumn"]:first-child::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
     }
 
     /* ─── Empty State Placeholder ─── */
