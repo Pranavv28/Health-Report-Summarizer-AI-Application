@@ -58,6 +58,10 @@ Return a JSON object with these fields:
 - "is_valid_report": true if this is a valid medical report, false otherwise
 - "unvalid_reason": reason string if not valid, else null
 - "report_title": descriptive title of the report
+- "patient_name": patient name if mentioned, else null
+- "patient_age": age if mentioned, else null
+- "patient_gender": gender if mentioned, else null
+- "test_date": test/report date if mentioned, else null
 - "patient_summary": 2-3 sentence executive overview
 - "biomarkers": array of objects, each with:
     - "parameter_name": test name
@@ -68,6 +72,7 @@ Return a JSON object with these fields:
     - "simple_explanation": 1-sentence plain English explanation
 - "key_findings": array of key takeaway strings
 - "medical_jargon_decoded": array of objects with "term" and "plain_english"
+- "medications_or_treatment": array of medications or clinical therapy suggestions
 - "questions_for_doctor": 3-5 recommended questions
 - "lifestyle_wellness_educational_tips": array of health tips
 
@@ -422,3 +427,72 @@ class MedicalSummarizer:
                 return self.summarize(file_obj, summary_type=summary_type, file_type="text")
 
         raise ValueError(f"Unsupported input type: {type(file_obj)}")
+
+    def answer_health_question(
+        self,
+        report_summary: str,
+        user_question: str,
+        chat_history: list[dict[str, str]] | None = None,
+    ) -> str:
+        """Provide conversational Q&A assistance using the active AI provider."""
+        history_context = ""
+        if chat_history:
+            history_context = "\n".join([
+                f"{msg['role'].capitalize()}: {msg['content']}" for msg in chat_history[-6:]
+            ])
+
+        prompt = f"""You are an empathetic, educational medical AI assistant.
+The patient is asking a question about their health report summarized below:
+
+--- REPORT SUMMARY ---
+{report_summary}
+----------------------
+
+Conversation History:
+{history_context}
+
+Patient Question: {user_question}
+
+Instructions:
+- Provide a clear, supportive answer based on the report summary.
+- Explain any relevant medical metrics in simple everyday English.
+- Avoid giving a definitive personal diagnosis.
+- Remind the user to consult their physician for personal medical decisions.
+"""
+        if self._provider == "groq" and self._groq_summarizer is not None:
+            from groq_engine import GROQ_MODEL_FALLBACKS
+            for model in GROQ_MODEL_FALLBACKS:
+                try:
+                    resp = self._groq_summarizer._client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": "You are a helpful, compassionate medical assistant."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        max_tokens=800,
+                        temperature=0.3
+                    )
+                    text = resp.choices[0].message.content or ""
+                    if text.strip():
+                        return text.strip()
+                except Exception as ex:
+                    logger.warning("Groq question attempt with %s failed: %s", model, ex)
+                    continue
+            return "Unable to answer question with Groq at this time. Please try again."
+
+        elif self._provider == "gemini" and self._gemini_analyzer is not None:
+            return self._gemini_analyzer.answer_health_question(report_summary, user_question, chat_history)
+
+        elif self._provider == "anthropic" and self._claude_client is not None:
+            try:
+                msg = self._claude_client.messages.create(
+                    model=CLAUDE_MODEL,
+                    max_tokens=MAX_TOKENS,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                text = "".join(b.text for b in msg.content if hasattr(b, "text"))
+                return text.strip() if text else "Unable to generate response."
+            except Exception as e:
+                return f"Error answering question: {str(e)}"
+
+        return "AI provider not available for chat. Please check your API key in .env."

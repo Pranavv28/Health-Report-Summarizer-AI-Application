@@ -23,7 +23,7 @@ TIMEOUT_SECONDS = 30
 # ──────────────────────────────────────────────
 # Groq Settings (Free Tier)
 # ──────────────────────────────────────────────
-GROQ_MODEL = "llama-3.3-70b-versatile"  # Free, high-quality model on Groq
+GROQ_MODEL = "llama-3.3-70b-versatile"  # Fast, reliable free-tier Groq model
 
 
 def get_api_key() -> str | None:
@@ -52,6 +52,10 @@ def is_anthropic_configured() -> bool:
     """Check if Anthropic API key is present and non-empty."""
     key = get_anthropic_api_key()
     return bool(key and len(key) > 5)
+
+
+# Fallback models if primary is unavailable
+GROQ_MODEL_FALLBACKS = [GROQ_MODEL, "llama-3.1-70b-versatile", "groq/compound"]
 
 
 def get_groq_api_key() -> str | None:

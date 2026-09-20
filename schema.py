@@ -6,8 +6,8 @@ biomarkers, medical term translations, and summary modes
 (Brief, Detailed, Highlighted).
 """
 
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, List
+from pydantic import BaseModel, Field, model_validator
 
 
 class Biomarker(BaseModel):
@@ -61,6 +61,22 @@ class HealthReportAnalysis(BaseModel):
         default="Health Diagnostic Summary",
         description="Descriptive title of the report (e.g., Lipid & CBC Panel Summary)"
     )
+    patient_name: Optional[str] = Field(
+        default=None,
+        description="Patient name if mentioned in the report"
+    )
+    patient_age: Optional[str] = Field(
+        default=None,
+        description="Patient age if mentioned in the report"
+    )
+    patient_gender: Optional[str] = Field(
+        default=None,
+        description="Patient gender if mentioned in the report"
+    )
+    test_date: Optional[str] = Field(
+        default=None,
+        description="Date of the report or sample collection if mentioned"
+    )
     patient_summary: str = Field(
         default="",
         description="Executive 2-3 sentence overview of the health report results"
@@ -77,14 +93,31 @@ class HealthReportAnalysis(BaseModel):
         default_factory=list,
         description="List of technical terms decoded into simple English"
     )
+    medications_or_treatment: list[str] = Field(
+        default_factory=list,
+        description="Medications, clinical treatments, or drug considerations mentioned or suggested"
+    )
     questions_for_doctor: list[str] = Field(
         default_factory=list,
         description="3-5 recommended questions to ask during doctor consultation"
     )
     lifestyle_wellness_educational_tips: list[str] = Field(
         default_factory=list,
-        description="General educational health tips related to the report findings"
+        description="General educational health tips and recommendations related to the report findings"
     )
+    recommendations: list[str] = Field(
+        default_factory=list,
+        description="Alias for lifestyle_wellness_educational_tips — LLMs may return this key directly"
+    )
+
+    @model_validator(mode="after")
+    def merge_recommendations(self) -> "HealthReportAnalysis":
+        """If LLM returned 'recommendations', merge into lifestyle_wellness_educational_tips."""
+        if self.recommendations and not self.lifestyle_wellness_educational_tips:
+            self.lifestyle_wellness_educational_tips = self.recommendations
+        elif self.lifestyle_wellness_educational_tips and not self.recommendations:
+            self.recommendations = self.lifestyle_wellness_educational_tips
+        return self
 
 
 # ──────────────────────────────────────────────

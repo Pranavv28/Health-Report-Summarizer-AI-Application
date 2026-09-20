@@ -15,6 +15,7 @@ from groq import Groq
 from config import (
     get_groq_api_key,
     GROQ_MODEL,
+    GROQ_MODEL_FALLBACKS,
     MAX_TOKENS,
     ANALYSIS_SYSTEM_INSTRUCTION,
 )
@@ -27,60 +28,52 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────
 
 BRIEF_PROMPT = """
-Analyze the following medical report and provide a BRIEF summary.
-Return a valid JSON object with EXACTLY these fields (no extra text, no markdown):
+Analyze the medical report and give a BRIEF summary. Be concise — 2-3 sentences max for overview.
+Return ONLY a JSON object (no markdown, no extra text):
 {
-  "report_title": "short descriptive title",
-  "overview": "2-3 sentence executive overview of findings",
-  "immediate_alerts": ["list", "of", "critical findings"],
+  "report_title": "short title (max 8 words)",
+  "overview": "2-3 sentence overview only",
+  "immediate_alerts": ["only critical findings, max 4 items"],
   "overall_status": "Normal" or "Attention Needed" or "Urgent Review"
 }
 """
 
 DETAILED_PROMPT = """
-Analyze the following medical report and provide a DETAILED structured analysis.
-Return a valid JSON object with EXACTLY these fields (no extra text, no markdown):
+Analyze the medical report. Be concise and structured.
+Return ONLY a JSON object (no markdown, no extra text):
 {
   "is_valid_report": true,
   "unvalid_reason": null,
-  "report_title": "descriptive title",
-  "patient_summary": "2-3 sentence executive overview",
+  "report_title": "short descriptive title (max 8 words)",
+  "patient_name": "patient name if found in text, else null",
+  "patient_age": "patient age if found, else null",
+  "patient_gender": "patient gender if found, else null",
+  "test_date": "report date if found, else null",
+  "patient_summary": "2-3 sentence summary only",
   "biomarkers": [
-    {
-      "parameter_name": "test name",
-      "value": "result value",
-      "unit": "unit",
-      "reference_range": "normal range",
-      "status": "Normal or High or Low or Critical",
-      "simple_explanation": "1-sentence plain English explanation"
-    }
+    {"parameter_name": "name", "value": "result", "unit": "unit", "reference_range": "range", "status": "Normal|High|Low|Critical", "simple_explanation": "one short sentence"}
   ],
-  "key_findings": ["finding 1", "finding 2"],
-  "medical_jargon_decoded": [{"term": "medical term", "plain_english": "explanation"}],
-  "questions_for_doctor": ["question 1", "question 2", "question 3"],
-  "lifestyle_wellness_educational_tips": ["tip 1", "tip 2"]
+  "key_findings": ["max 5 key findings"],
+  "medical_jargon_decoded": [{"term": "term", "plain_english": "brief plain explanation"}],
+  "medications_or_treatment": ["relevant medications, clinical treatments, or drug considerations"],
+  "questions_for_doctor": ["max 4 questions"],
+  "lifestyle_wellness_educational_tips": ["max 4 lifestyle tips"],
+  "recommendations": ["max 4 clinical recommendations based on abnormal findings"]
 }
 """
 
 HIGHLIGHTED_PROMPT = """
-Analyze the following medical report and highlight ONLY the abnormal findings.
-Return a valid JSON object with EXACTLY these fields (no extra text, no markdown):
+Analyze the medical report. List ONLY abnormal (High/Low/Critical) findings — skip all normal values.
+Return ONLY a JSON object (no markdown, no extra text):
 {
-  "report_title": "title focused on abnormal findings",
-  "patient_summary": "brief overview focused on what needs attention",
+  "report_title": "short title focused on abnormal findings",
+  "patient_summary": "1-2 sentences on what needs attention",
   "abnormal_biomarkers": [
-    {
-      "parameter_name": "test name",
-      "value": "result value",
-      "unit": "unit",
-      "reference_range": "normal range",
-      "status": "High or Low or Critical",
-      "simple_explanation": "why this matters"
-    }
+    {"parameter_name": "name", "value": "result", "unit": "unit", "reference_range": "range", "status": "High|Low|Critical", "simple_explanation": "why this matters briefly"}
   ],
-  "risk_flags": ["risk alert 1", "risk alert 2"],
-  "priority_actions": ["action 1", "action 2"],
-  "questions_for_doctor": ["question 1", "question 2"]
+  "risk_flags": ["max 4 risk alerts"],
+  "priority_actions": ["max 3 actions"],
+  "questions_for_doctor": ["max 3 targeted questions"]
 }
 """
 
@@ -90,8 +83,7 @@ SUMMARY_MODE_CONFIG: dict[str, dict[str, Any]] = {
     "Highlighted": {"prompt": HIGHLIGHTED_PROMPT,  "model_cls": HighlightedSummary},
 }
 
-# Fallback models if primary is unavailable
-GROQ_MODEL_FALLBACKS = [GROQ_MODEL, "llama3-8b-8192", "mixtral-8x7b-32768"]
+# GROQ_MODEL_FALLBACKS imported from config
 
 
 class GroqSummarizer:
@@ -148,14 +140,11 @@ class GroqSummarizer:
                     raw_text = response.choices[0].message.content or ""
                     cleaned = raw_text.strip()
 
-                    # Strip markdown fences if present
-                    if cleaned.startswith("```json"):
-                        cleaned = cleaned[7:]
-                    if cleaned.startswith("```"):
-                        cleaned = cleaned[3:]
-                    if cleaned.endswith("```"):
-                        cleaned = cleaned[:-3]
-                    cleaned = cleaned.strip()
+                    # Extract JSON object between first '{' and last '}'
+                    start_idx = cleaned.find("{")
+                    end_idx = cleaned.rfind("}")
+                    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                        cleaned = cleaned[start_idx : end_idx + 1]
 
                     parsed = model_cls.model_validate_json(cleaned)
                     logger.info("Groq summarization successful with model: %s", model)

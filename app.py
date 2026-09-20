@@ -1,13 +1,6 @@
 """
-app.py — Gradio Blocks UI for the Automated Medical Report Summarization Agent.
-
-Features:
-- File upload (PDF/TXT) and text paste input
-- Three summary modes: Brief, Detailed, Highlighted
-- Built-in sample report quick-loader
-- Interactive biomarker table, summary display, and JSON viewer
-- PDF & JSON export downloads
-- Medical disclaimer notice
+app.py — Gradio Blocks UI for the Medical Report Summarizer AI Agent.
+Beautiful light-theme design with concise, clean output layout.
 """
 
 import json
@@ -29,24 +22,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ──────────────────────────────────────────────
-# Global summarizer instance (lazy-loaded)
-# ──────────────────────────────────────────────
 _summarizer: MedicalSummarizer | None = None
 
 
 def get_summarizer() -> MedicalSummarizer:
-    """Lazy-load the MedicalSummarizer singleton."""
     global _summarizer
     if _summarizer is None:
         _summarizer = MedicalSummarizer()
     return _summarizer
 
 
-# ──────────────────────────────────────────────
-# Core handler functions
-# ──────────────────────────────────────────────
-
+# ── Core Handler ──────────────────────────────────────────────────────────────
 
 def summarize_report(
     file_obj: Any,
@@ -54,21 +40,12 @@ def summarize_report(
     summary_type: str,
     sample_choice: str,
 ) -> tuple[str, str, str, str | None, str | None]:
-    """
-    Main summarization handler for the Gradio UI.
-
-    Returns:
-        Tuple of (summary_markdown, biomarker_table_md, json_export, pdf_path, json_path)
-    """
     try:
         summarizer = get_summarizer()
-
-        # Determine input source priority: file > text > sample
         source: str | bytes | None = None
         file_type = "text"
 
         if file_obj is not None:
-            # Gradio file upload — file_obj is a file path string
             path = Path(file_obj) if isinstance(file_obj, str) else Path(file_obj.name)
             if path.suffix.lower() == ".pdf":
                 source = path.read_bytes()
@@ -84,23 +61,16 @@ def summarize_report(
             file_type = "text"
         else:
             return (
-                "⚠️ **No input provided.** Please upload a file, paste report text, or select a sample report.",
-                "",
-                "",
-                None,
-                None,
+                "⚠️ Please upload a file, paste report text, or select a sample report.",
+                "", "", None, None,
             )
 
-        # Run summarization
         result = summarizer.summarize(source, summary_type=summary_type, file_type=file_type)
         summary_data = result["summary"]
         raw_json = result["raw_json"]
 
-        # Format outputs
         summary_md = _format_summary_markdown(summary_data, summary_type)
         biomarker_md = _format_biomarker_table(summary_data)
-
-        # Generate downloadable files
         pdf_path = _generate_pdf_download(summary_data)
         json_path = _generate_json_download(raw_json)
 
@@ -108,152 +78,152 @@ def summarize_report(
 
     except Exception as e:
         logger.error(f"Summarization error: {e}", exc_info=True)
-        error_msg = f"❌ **Error:** {str(e)}"
-        return error_msg, "", "", None, None
+        return f"❌ **Error:** {str(e)}", "", "", None, None
 
 
 def _format_summary_markdown(data: dict[str, Any], mode: str) -> str:
-    """Format the summary data into readable Markdown."""
+    """Compact, clean markdown output — never longer than needed."""
     lines: list[str] = []
 
     title = data.get("report_title", "Health Report Summary")
-    lines.append(f"# 🏥 {title}\n")
+    lines.append(f"## {title}\n")
 
-    # Brief mode
+    # 1. 📋 PATIENT INFO
+    name = data.get("patient_name")
+    age = data.get("patient_age")
+    gender = data.get("patient_gender")
+    date = data.get("test_date")
+    patient_bits = []
+    if name: patient_bits.append(f"**Name:** {name}")
+    if age: patient_bits.append(f"**Age:** {age}")
+    if gender: patient_bits.append(f"**Gender:** {gender}")
+    if date: patient_bits.append(f"**Date:** {date}")
+
+    if patient_bits:
+        lines.append(f"### 📋 PATIENT INFO\n{' &nbsp;·&nbsp; '.join(patient_bits)}\n")
+
+    # Overview text
+    overview = data.get("patient_summary", data.get("overview", ""))
+    if overview:
+        lines.append(f"**Executive Overview:** {overview}\n")
+
     if mode == "Brief":
-        overview = data.get("overview", data.get("patient_summary", ""))
-        if overview:
-            lines.append(f"**Overview:** {overview}\n")
-
         status = data.get("overall_status", "")
         if status:
-            emoji = {"Normal": "🟢", "Attention Needed": "🟡", "Urgent Review": "🔴"}.get(
-                status, "⚪"
-            )
-            lines.append(f"**Status:** {emoji} {status}\n")
+            emoji = {"Normal": "🟢", "Attention Needed": "🟡", "Urgent Review": "🔴"}.get(status, "⚪")
+            lines.append(f"**Overall Clinical Status:** {emoji} {status}\n")
 
         alerts = data.get("immediate_alerts", [])
         if alerts:
-            lines.append("### ⚠️ Immediate Alerts\n")
-            for alert in alerts:
-                lines.append(f"- {alert}")
+            lines.append("### 🩺 KEY FINDINGS & ALERTS")
+            for a in alerts[:5]:
+                lines.append(f"- ⚠️ {a}")
             lines.append("")
 
-    # Detailed mode
     elif mode == "Detailed":
-        summary = data.get("patient_summary", "")
-        if summary:
-            lines.append(f"**Patient Summary:** {summary}\n")
-
+        # 2. 🩺 KEY FINDINGS
         findings = data.get("key_findings", [])
         if findings:
-            lines.append("### 🔍 Key Findings\n")
-            for f in findings:
+            lines.append("### 🩺 KEY FINDINGS")
+            for f in findings[:6]:
                 lines.append(f"- {f}")
             lines.append("")
 
-        jargon = data.get("medical_jargon_decoded", [])
-        if jargon:
-            lines.append("### 📖 Medical Terms Decoded\n")
-            for item in jargon:
-                term = item.get("term", "") if isinstance(item, dict) else item.term
-                meaning = (
-                    item.get("plain_english", "") if isinstance(item, dict) else item.plain_english
-                )
-                lines.append(f"- **{term}:** {meaning}")
+        # 3. ⚠️ ABNORMAL VALUES
+        biomarkers = data.get("biomarkers", [])
+        abnormal_list = [b for b in biomarkers if (b.get("status") if isinstance(b, dict) else b.status).lower() not in ("normal", "optimal")]
+        if abnormal_list:
+            lines.append("### ⚠️ ABNORMAL VALUES (Flagged)")
+            for b in abnormal_list[:8]:
+                b_name = b.get("parameter_name") if isinstance(b, dict) else b.parameter_name
+                b_val = b.get("value") if isinstance(b, dict) else b.value
+                b_unit = b.get("unit") if isinstance(b, dict) else b.unit
+                b_ref = b.get("reference_range") if isinstance(b, dict) else b.reference_range
+                b_status = b.get("status") if isinstance(b, dict) else b.status
+                icon = "🔴" if "high" in b_status.lower() or "critical" in b_status.lower() else "🔵"
+                lines.append(f"- {icon} **{b_name}:** {b_val} {b_unit} (*{b_status}* — Ref Range: {b_ref})")
             lines.append("")
 
+        # 4. 💊 MEDICATIONS / TREATMENT
+        meds = data.get("medications_or_treatment", [])
+        if meds:
+            lines.append("### 💊 MEDICATIONS & TREATMENT CONSIDERATIONS")
+            for m in meds[:4]:
+                lines.append(f"- {m}")
+            lines.append("")
+
+        # 5. ✅ RECOMMENDATIONS & DOCTOR QUESTIONS
         questions = data.get("questions_for_doctor", [])
-        if questions:
-            lines.append("### 🩺 Questions for Your Doctor\n")
-            for q in questions:
-                lines.append(f"- ☐ {q}")
-            lines.append("")
-
         tips = data.get("lifestyle_wellness_educational_tips", [])
-        if tips:
-            lines.append("### 💡 Lifestyle & Wellness Tips\n")
-            for tip in tips:
-                lines.append(f"- {tip}")
+        if questions or tips:
+            lines.append("### ✅ RECOMMENDATIONS & DOCTOR QUESTIONS")
+            if questions:
+                lines.append("**Questions to Ask Your Doctor:**")
+                for q in questions[:4]:
+                    lines.append(f"- [ ] {q}")
+            if tips:
+                lines.append("\n**Lifestyle & Wellness Guidance:**")
+                for t in tips[:4]:
+                    lines.append(f"- 🌱 {t}")
             lines.append("")
 
-    # Highlighted mode
     elif mode == "Highlighted":
-        summary = data.get("patient_summary", "")
-        if summary:
-            lines.append(f"**Summary:** {summary}\n")
-
+        # 2. 🩺 KEY FINDINGS / RISK FLAGS
         flags = data.get("risk_flags", [])
         if flags:
-            lines.append("### 🚩 Risk Flags\n")
-            for flag in flags:
+            lines.append("### 🩺 KEY FINDINGS & RISK FLAGS")
+            for flag in flags[:5]:
                 lines.append(f"- 🔴 {flag}")
             lines.append("")
 
+        # 3. ⚠️ ABNORMAL VALUES
+        abnormals = data.get("abnormal_biomarkers", [])
+        if abnormals:
+            lines.append("### ⚠️ ABNORMAL VALUES (Critical Alerts)")
+            for b in abnormals[:8]:
+                b_name = b.get("parameter_name") if isinstance(b, dict) else b.parameter_name
+                b_val = b.get("value") if isinstance(b, dict) else b.value
+                b_unit = b.get("unit") if isinstance(b, dict) else b.unit
+                b_ref = b.get("reference_range") if isinstance(b, dict) else b.reference_range
+                b_status = b.get("status") if isinstance(b, dict) else b.status
+                icon = "🔴" if "high" in b_status.lower() or "critical" in b_status.lower() else "🔵"
+                lines.append(f"- {icon} **{b_name}:** {b_val} {b_unit} (*{b_status}* — Ref Range: {b_ref})")
+            lines.append("")
+
+        # 5. ✅ RECOMMENDATIONS
         actions = data.get("priority_actions", [])
-        if actions:
-            lines.append("### ✅ Priority Actions\n")
-            for action in actions:
-                lines.append(f"- {action}")
-            lines.append("")
-
         questions = data.get("questions_for_doctor", [])
-        if questions:
-            lines.append("### 🩺 Questions for Your Doctor\n")
-            for q in questions:
-                lines.append(f"- ☐ {q}")
-            lines.append("")
+        if actions or questions:
+            lines.append("### ✅ RECOMMENDATIONS & PRIORITY ACTIONS")
+            for action in actions[:4]:
+                lines.append(f"- ⚡ {action}")
+            for q in questions[:3]:
+                lines.append(f"- [ ] Consult Doctor: {q}")
 
-    # Disclaimer
-    lines.append("---")
-    lines.append(
-        "*⚕️ **Disclaimer:** This AI-generated summary is for educational and informational "
-        "purposes only. It is not a substitute for professional medical advice, diagnosis, "
-        "or treatment.*"
-    )
-
+    lines.append("\n---\n*⚕️ AI-generated summary — for educational use only. Consult your doctor.*")
     return "\n".join(lines)
 
 
 def _format_biomarker_table(data: dict[str, Any]) -> str:
-    """Format biomarkers into a Markdown table."""
     biomarkers = data.get("biomarkers", data.get("abnormal_biomarkers", []))
     if not biomarkers:
-        return "*No biomarker data available for this summary mode.*"
+        return "*No biomarker data for this summary mode.*"
 
     lines = [
         "| Parameter | Value | Unit | Reference Range | Status |",
         "|-----------|-------|------|-----------------|--------|",
     ]
-
     for b in biomarkers:
         if isinstance(b, dict):
-            name = b.get("parameter_name", "")
-            value = b.get("value", "")
-            unit = b.get("unit", "")
-            ref = b.get("reference_range", "")
-            status = b.get("status", "")
-        else:
             name, value, unit, ref, status = (
-                b.parameter_name,
-                b.value,
-                b.unit,
-                b.reference_range,
-                b.status,
+                b.get("parameter_name", ""), b.get("value", ""),
+                b.get("unit", ""), b.get("reference_range", ""), b.get("status", ""),
             )
+        else:
+            name, value, unit, ref, status = b.parameter_name, b.value, b.unit, b.reference_range, b.status
 
-        # Status emoji
-        status_display = status
-        if status.lower() in ("high", "elevated"):
-            status_display = f"🔴 {status}"
-        elif status.lower() in ("low", "decreased"):
-            status_display = f"🔵 {status}"
-        elif status.lower() in ("critical", "abnormal"):
-            status_display = f"⚫ {status}"
-        elif status.lower() == "normal":
-            status_display = f"🟢 {status}"
-
-        lines.append(f"| {name} | {value} | {unit} | {ref} | {status_display} |")
+        icon = {"high": "🔴", "low": "🔵", "critical": "⚫", "normal": "🟢"}.get(status.lower(), "⚪")
+        lines.append(f"| {name} | {value} | {unit} | {ref} | {icon} {status} |")
 
     return "\n".join(lines)
 
@@ -261,12 +231,21 @@ def _format_biomarker_table(data: dict[str, Any]) -> str:
 def _generate_pdf_download(data: dict[str, Any]) -> str | None:
     """Generate a PDF file and return its temp path for download."""
     try:
-        analysis = HealthReportAnalysis.model_validate(data)
+        # Ensure required HealthReportAnalysis fields exist (Brief/Highlighted don't have them all)
+        pdf_data = {
+            "is_valid_report": data.get("is_valid_report", True),
+            "unvalid_reason": data.get("unvalid_reason"),
+            "report_title": data.get("report_title", "Health Report Summary"),
+            "patient_summary": data.get("patient_summary", data.get("overview", "")),
+            "biomarkers": data.get("biomarkers", data.get("abnormal_biomarkers", [])),
+            "key_findings": data.get("key_findings", data.get("immediate_alerts", data.get("risk_flags", []))),
+            "medical_jargon_decoded": data.get("medical_jargon_decoded", []),
+            "questions_for_doctor": data.get("questions_for_doctor", []),
+            "lifestyle_wellness_educational_tips": data.get("lifestyle_wellness_educational_tips", data.get("priority_actions", [])),
+        }
+        analysis = HealthReportAnalysis.model_validate(pdf_data)
         pdf_bytes = generate_pdf_report(analysis)
-
-        tmp = tempfile.NamedTemporaryFile(
-            delete=False, suffix=".pdf", prefix="health_report_"
-        )
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", prefix="health_report_")
         tmp.write(pdf_bytes)
         tmp.close()
         return tmp.name
@@ -276,11 +255,8 @@ def _generate_pdf_download(data: dict[str, Any]) -> str | None:
 
 
 def _generate_json_download(raw_json: str) -> str | None:
-    """Save JSON export to a temp file for download."""
     try:
-        tmp = tempfile.NamedTemporaryFile(
-            delete=False, suffix=".json", prefix="health_report_"
-        )
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".json", prefix="health_report_")
         tmp.write(raw_json.encode("utf-8"))
         tmp.close()
         return tmp.name
@@ -290,161 +266,268 @@ def _generate_json_download(raw_json: str) -> str | None:
 
 
 def load_sample(sample_name: str) -> str:
-    """Load a sample report into the text input."""
-    if sample_name and sample_name in SAMPLE_REPORTS:
-        return SAMPLE_REPORTS[sample_name]
-    return ""
+    return SAMPLE_REPORTS.get(sample_name, "")
 
 
-# ──────────────────────────────────────────────
-# Gradio UI Definition
-# ──────────────────────────────────────────────
+# ── UI ────────────────────────────────────────────────────────────────────────
+
+LIGHT_CSS = """
+/* ── Google Font ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body, .gradio-container {
+    font-family: 'Inter', sans-serif !important;
+    background: #F8FAFC !important;
+}
+
+/* ── Header banner ── */
+.app-header {
+    background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 50%, #06B6D4 100%);
+    border-radius: 16px;
+    padding: 32px 40px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(59,130,246,0.25);
+}
+.app-header h1 {
+    color: #fff !important;
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    margin: 0 0 8px 0 !important;
+}
+.app-header p {
+    color: rgba(255,255,255,0.88) !important;
+    font-size: 0.95rem !important;
+    margin: 0 !important;
+}
+
+/* ── Disclaimer ── */
+.disclaimer {
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+    border-left: 4px solid #F97316;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+    font-size: 0.84rem;
+    color: #9A3412;
+}
+
+/* ── Cards ── */
+.card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    margin-bottom: 14px;
+}
+
+/* ── Section labels ── */
+.section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748B;
+    margin-bottom: 10px;
+}
+
+/* ── Primary button ── */
+button.primary-btn, .primary-btn {
+    background: linear-gradient(135deg, #2563EB, #3B82F6) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    padding: 12px 0 !important;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.35) !important;
+    transition: all 0.2s ease !important;
+}
+button.primary-btn:hover {
+    box-shadow: 0 6px 20px rgba(37,99,235,0.45) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ── Tabs ── */
+.tab-nav button {
+    font-weight: 500 !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+.tab-nav button.selected {
+    color: #2563EB !important;
+    border-bottom: 2px solid #2563EB !important;
+}
+
+/* ── Provider badge ── */
+.provider-badge {
+    display: inline-block;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+/* ── Footer ── */
+.app-footer {
+    text-align: center;
+    color: #94A3B8;
+    font-size: 0.8rem;
+    padding: 16px 0 4px 0;
+    border-top: 1px solid #E2E8F0;
+    margin-top: 10px;
+}
+
+/* ── Inputs ── */
+textarea, input[type="text"] {
+    border-radius: 10px !important;
+    border: 1px solid #CBD5E1 !important;
+    font-size: 0.9rem !important;
+}
+textarea:focus, input[type="text"]:focus {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+}
+
+/* ── Summary output ── */
+.output-panel {
+    background: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    min-height: 200px;
+}
+"""
+
 
 def create_app() -> gr.Blocks:
-    """Build and return the Gradio Blocks application."""
 
-    theme = gr.themes.Soft(
-        primary_hue="blue",
-        secondary_hue="slate",
-        font=gr.themes.GoogleFont("Inter"),
-    )
+    try:
+        provider = get_active_provider()
+        provider_label = {
+            "groq": "⚡ Groq AI (Free)",
+            "gemini": "✨ Gemini AI (Google)",
+            "anthropic": "☁️ Claude AI (Anthropic)",
+        }.get(provider, "⚠️ No API key configured")
+    except Exception:
+        provider_label = "⚠️ Provider not detected"
 
     with gr.Blocks(
-        title="🏥 Medical Report Summarizer — AI Agent",
-        theme=theme,
-        css="""
-        .disclaimer-box {
-            background: #FEF2F2;
-            border: 1px solid #FECACA;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 0.85em;
-            color: #991B1B;
-        }
-        .header-section {
-            text-align: center;
-            padding: 20px 0 10px 0;
-        }
-        """,
+        title="🏥 Medical Report Summarizer — AI",
     ) as demo:
 
-        # Header
-        gr.Markdown(
-            """
-            <div class="header-section">
+        # ── Header ───────────────────────────────────────────────────────────
+        gr.HTML("""
+        <div class="app-header">
+            <h1 style="display:flex; align-items:center; justify-content:center; gap:12px;">
+                <span>🩺</span> Jotform Medical Report AI Agent
+            </h1>
+            <p>Conversational Healthcare Assistant • Powered by Jotform AI & Gemini Engine</p>
+        </div>
+        """)
 
-            # 🏥 Automated Medical Report Summarization Agent
+        # ── Disclaimer ───────────────────────────────────────────────────────
+        gr.HTML("""
+        <div class="disclaimer">
+            ⚕️ <strong>Medical Disclaimer:</strong> This Jotform AI Agent is for <em>educational purposes only</em>.
+            It does not replace professional medical advice. Always consult a qualified healthcare provider.
+        </div>
+        """)
 
-            Upload a medical report (PDF or text) and get an AI-powered, structured health summary
-            with biomarker analysis, risk flags, doctor questions, and export options.
+        # ── Main Layout ──────────────────────────────────────────────────────
+        with gr.Row(equal_height=False):
 
-            </div>
-            """,
-        )
-
-        # Disclaimer
-        gr.HTML(
-            '<div class="disclaimer-box">'
-            "⚕️ <strong>Medical Disclaimer:</strong> This tool is for <em>educational and "
-            "informational purposes only</em>. It is not a substitute for professional medical "
-            "advice, diagnosis, or treatment. Always consult a qualified healthcare provider."
-            "</div>"
-        )
-
-        with gr.Row():
-            # Left column: Inputs
-            with gr.Column(scale=1):
-                gr.Markdown("### 📄 Input Report")
+            # Left: Input Panel
+            with gr.Column(scale=1, min_width=320):
+                gr.HTML('<div class="card">')
+                gr.HTML('<div class="section-label">📄 Input Report</div>')
 
                 file_input = gr.File(
-                    label="Upload Report (PDF or TXT)",
-                    file_types=[".pdf", ".txt", ".text"],
+                    label="Upload PDF or TXT",
+                    file_types=[".pdf", ".txt"],
                     file_count="single",
                     type="filepath",
                 )
 
                 text_input = gr.Textbox(
                     label="Or Paste Report Text",
-                    placeholder="Paste your medical report text here...",
-                    lines=8,
-                    max_lines=20,
+                    placeholder="Paste your lab report, blood test results, or diagnostic summary here...",
+                    lines=7,
+                    max_lines=15,
                 )
 
-                sample_dropdown = gr.Dropdown(
-                    label="🧪 Quick Load Sample Report",
-                    choices=[""] + list(SAMPLE_REPORTS.keys()),
-                    value="",
-                    interactive=True,
-                )
+                with gr.Row():
+                    sample_dropdown = gr.Dropdown(
+                        label="Quick Sample",
+                        choices=[""] + list(SAMPLE_REPORTS.keys()),
+                        value="",
+                        scale=3,
+                    )
+                    load_sample_btn = gr.Button("Load", variant="secondary", size="sm", scale=1)
 
-                load_sample_btn = gr.Button("📋 Load Sample", variant="secondary", size="sm")
+                gr.HTML('</div>')
+
+                gr.HTML('<div class="card">')
+                gr.HTML('<div class="section-label">⚙️ Summary Mode</div>')
 
                 summary_type = gr.Radio(
                     choices=["Brief", "Detailed", "Highlighted"],
-                    value="Detailed",
-                    label="Summary Mode",
+                    value="Brief",
+                    label="",
+                    info="Brief = quick overview · Detailed = full analysis · Highlighted = abnormal only",
                 )
 
                 summarize_btn = gr.Button(
-                    "🚀 Summarize Report", variant="primary", size="lg"
+                    "🚀 Analyze Report",
+                    variant="primary",
+                    size="lg",
+                    elem_classes=["primary-btn"],
                 )
 
-                # Provider info
-                try:
-                    provider = get_active_provider()
-                    provider_label = {
-                        "anthropic": "☁️ Claude AI (Anthropic)",
-                        "gemini": "✨ Gemini AI (Google)",
-                        "none": "⚠️ No API key configured",
-                    }.get(provider, provider)
-                except Exception:
-                    provider_label = "⚠️ Provider not detected"
+                gr.HTML(f'<div class="provider-badge">{provider_label}</div>')
+                gr.HTML('</div>')
 
-                gr.Markdown(f"**Active AI Provider:** {provider_label}")
-
-            # Right column: Outputs
+            # Right: Output Panel
             with gr.Column(scale=2):
-                gr.Markdown("### 📊 Analysis Results")
-
                 with gr.Tabs():
                     with gr.Tab("📝 Summary"):
                         output_summary = gr.Markdown(
-                            value="*Upload a report or load a sample to get started.*",
-                            label="Summary",
+                            value="*Analyze a report to see the summary here.*",
+                            elem_classes=["output-panel"],
                         )
 
                     with gr.Tab("🔬 Biomarkers"):
                         output_biomarkers = gr.Markdown(
-                            value="*Biomarker table will appear here after analysis.*",
-                            label="Biomarkers",
+                            value="*Biomarker table will appear after analysis.*",
+                            elem_classes=["output-panel"],
                         )
 
-                    with gr.Tab("📦 JSON Export"):
+                    with gr.Tab("📦 JSON"):
                         output_json = gr.Code(
                             value="",
                             language="json",
                             label="Structured JSON Output",
-                            lines=20,
+                            lines=18,
                         )
 
                 with gr.Row():
-                    pdf_download = gr.File(
-                        label="📥 Download PDF Report",
-                        interactive=False,
-                    )
-                    json_download = gr.File(
-                        label="📥 Download JSON Export",
-                        interactive=False,
-                    )
+                    pdf_download = gr.File(label="📥 Download PDF", interactive=False)
+                    json_download = gr.File(label="📥 Download JSON", interactive=False)
 
-        # ── Event Handlers ──
+        # ── Footer ───────────────────────────────────────────────────────────
+        gr.HTML("""
+        <div class="app-footer">
+            Health Report Summarizer AI &nbsp;·&nbsp; Powered by Groq &nbsp;·&nbsp;
+            Built by <strong>Pranav Lakhe</strong> &nbsp;·&nbsp; SIT Nagpur
+        </div>
+        """)
 
-        load_sample_btn.click(
-            fn=load_sample,
-            inputs=[sample_dropdown],
-            outputs=[text_input],
-        )
+        # ── Events ───────────────────────────────────────────────────────────
+        load_sample_btn.click(fn=load_sample, inputs=[sample_dropdown], outputs=[text_input])
 
         summarize_btn.click(
             fn=summarize_report,
@@ -452,21 +535,10 @@ def create_app() -> gr.Blocks:
             outputs=[output_summary, output_biomarkers, output_json, pdf_download, json_download],
         )
 
-        # Footer
-        gr.Markdown(
-            """
-            ---
-            **Built with** Gradio + Claude AI | **Project:** Health Report Summarizer AI Application
-            | **Author:** Pranav Lakhe (SIT Nagpur)
-            """,
-        )
-
     return demo
 
 
-# ──────────────────────────────────────────────
-# Main Entry Point
-# ──────────────────────────────────────────────
+# ── Entry Point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     app = create_app()
@@ -475,4 +547,11 @@ if __name__ == "__main__":
         server_name="127.0.0.1",
         server_port=7860,
         show_error=True,
+        theme=gr.themes.Default(
+            primary_hue=gr.themes.colors.blue,
+            secondary_hue=gr.themes.colors.slate,
+            neutral_hue=gr.themes.colors.slate,
+            font=gr.themes.GoogleFont("Inter"),
+        ),
+        css=LIGHT_CSS,
     )
