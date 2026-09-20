@@ -653,8 +653,21 @@ provider_display_name = {
 }.get(active_provider, "AI Engine")
 
 if active_provider == "none":
-    st.error("⚠️ No AI Provider Configured")
-    st.info("Please set `GROQ_API_KEY` (Free tier from https://console.groq.com) or `GEMINI_API_KEY` in your `.env` file.")
+    st.error("⚠️ No AI Provider API Key Found")
+    st.markdown("""
+    <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:12px; padding:16px 20px; margin-top:8px;">
+        <p style="font-weight:700; color:#c2410c; margin:0 0 10px;">To run this app you need a free Groq API key.</p>
+        <p style="color:#7c3aed; margin:0 0 6px;"><strong>On Streamlit Cloud:</strong></p>
+        <ol style="color:#374151; font-size:0.9rem; margin:0 0 10px; padding-left:18px;">
+            <li>Go to your app dashboard → <strong>Settings → Secrets</strong></li>
+            <li>Add this line:<br><code style="background:#f3f4f6; padding:2px 6px; border-radius:4px;">GROQ_API_KEY = "gsk_your_key_here"</code></li>
+            <li>Click <strong>Save</strong> — the app will auto-restart</li>
+        </ol>
+        <p style="color:#374151; font-size:0.85rem; margin:0;">
+            Get a free key at <strong>console.groq.com</strong> (no credit card needed)
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     st.stop()
 
 

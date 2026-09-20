@@ -2,10 +2,30 @@ import os
 import logging
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables from .env file (local dev)
 load_dotenv(override=True)
 
 logger = logging.getLogger(__name__)
+
+
+def _get_secret(key: str) -> str | None:
+    """
+    Read a secret from environment variables first, then Streamlit Cloud secrets.
+    This enables both local (.env) and Streamlit Cloud (st.secrets) deployment.
+    """
+    # 1. Try environment variable first (local .env via dotenv)
+    val = os.getenv(key)
+    if val and val.strip():
+        return val.strip()
+    # 2. Fallback to Streamlit Cloud secrets
+    try:
+        import streamlit as st
+        val = st.secrets.get(key)
+        if val and str(val).strip():
+            return str(val).strip()
+    except Exception:
+        pass
+    return None
 
 # ──────────────────────────────────────────────
 # Google Gemini Settings
@@ -27,11 +47,8 @@ GROQ_MODEL = "llama-3.3-70b-versatile"  # Fast, reliable free-tier Groq model
 
 
 def get_api_key() -> str | None:
-    """Retrieve GEMINI_API_KEY from environment variables."""
-    key = os.getenv("GEMINI_API_KEY")
-    if key:
-        key = key.strip()
-    return key if key else None
+    """Retrieve GEMINI_API_KEY from environment or Streamlit secrets."""
+    return _get_secret("GEMINI_API_KEY")
 
 
 def is_api_key_configured() -> bool:
@@ -41,11 +58,8 @@ def is_api_key_configured() -> bool:
 
 
 def get_anthropic_api_key() -> str | None:
-    """Retrieve ANTHROPIC_API_KEY from environment variables."""
-    key = os.getenv("ANTHROPIC_API_KEY")
-    if key:
-        key = key.strip()
-    return key if key else None
+    """Retrieve ANTHROPIC_API_KEY from environment or Streamlit secrets."""
+    return _get_secret("ANTHROPIC_API_KEY")
 
 
 def is_anthropic_configured() -> bool:
@@ -59,11 +73,8 @@ GROQ_MODEL_FALLBACKS = [GROQ_MODEL, "llama-3.1-70b-versatile", "groq/compound"]
 
 
 def get_groq_api_key() -> str | None:
-    """Retrieve GROQ_API_KEY from environment variables."""
-    key = os.getenv("GROQ_API_KEY")
-    if key:
-        key = key.strip()
-    return key if key else None
+    """Retrieve GROQ_API_KEY from environment or Streamlit secrets."""
+    return _get_secret("GROQ_API_KEY")
 
 
 def is_groq_configured() -> bool:
