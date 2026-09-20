@@ -73,7 +73,7 @@ class HealthReportAnalyzer:
             raise ValueError(f"Unsupported file format: {file_type}")
 
         # Model retry list — confirmed available on this API key
-        models_to_try = [MODEL_NAME, "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"]
+        models_to_try = [MODEL_NAME, "gemini-1.5-flash", "gemini-1.5-flash-8b"]
         last_exception = None
 
         for model in models_to_try:

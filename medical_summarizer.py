@@ -110,8 +110,23 @@ class MedicalSummarizer:
         self._provider: str = "none"
         self._claude_client: Any = None
         self._gemini_analyzer: Any = None
+        self._gemini_client: Any = None
 
-        if is_anthropic_configured():
+        # Prefer Gemini (free tier) — use Anthropic only if explicitly configured
+        if is_api_key_configured():
+            try:
+                from gemini_engine import HealthReportAnalyzer
+                from google import genai
+                from config import get_api_key, MODEL_NAME
+
+                self._gemini_analyzer = HealthReportAnalyzer()
+                self._gemini_client = genai.Client(api_key=get_api_key())
+                self._provider = "gemini"
+                logger.info("MedicalSummarizer initialized with Google Gemini (free tier).")
+            except Exception as e:
+                logger.error(f"Gemini initialization failed: {e}")
+
+        if self._provider == "none" and is_anthropic_configured():
             try:
                 from anthropic import Anthropic
 
@@ -122,22 +137,11 @@ class MedicalSummarizer:
                 self._provider = "anthropic"
                 logger.info("MedicalSummarizer initialized with Anthropic Claude.")
             except ImportError:
-                logger.warning("anthropic package not installed; trying Gemini fallback.")
-
-        if self._provider == "none" and is_api_key_configured():
-            try:
-                from gemini_engine import HealthReportAnalyzer
-
-                self._gemini_analyzer = HealthReportAnalyzer()
-                self._provider = "gemini"
-                logger.info("MedicalSummarizer initialized with Google Gemini fallback.")
-            except Exception as e:
-                logger.error(f"Gemini fallback initialization failed: {e}")
+                logger.warning("anthropic package not installed.")
 
         if self._provider == "none":
             raise ValueError(
-                "No AI provider configured. Please set ANTHROPIC_API_KEY or "
-                "GEMINI_API_KEY in your .env file."
+                "No AI provider configured. Please set GEMINI_API_KEY in your .env file."
             )
 
     @property
@@ -191,10 +195,10 @@ class MedicalSummarizer:
                 )
 
         # Route to the appropriate provider
-        if self._provider == "anthropic":
-            return self._summarize_with_claude(report_text, summary_type)
+        if self._provider == "gemini":
+            return self._summarize_with_gemini(report_text, source, file_type, summary_type)
         else:
-            return self._summarize_with_gemini(report_text, source, file_type)
+            return self._summarize_with_claude(report_text, summary_type)
 
     def _summarize_with_claude(
         self, report_text: str, summary_type: str
@@ -276,31 +280,92 @@ class MedicalSummarizer:
         report_text: str,
         source: str | bytes,
         file_type: str,
+        summary_type: str = "Detailed",
     ) -> dict[str, Any]:
         """
-        Fallback summarization using the existing Gemini engine.
-        Always returns a Detailed (HealthReportAnalysis) result.
+        Summarization using Google Gemini (free tier).
+        Supports Brief, Detailed, and Highlighted summary modes via text prompting.
 
         Args:
             report_text: Extracted report text.
             source: Original source data.
             file_type: Original file type.
+            summary_type: One of 'Brief', 'Detailed', 'Highlighted'.
 
         Returns:
             Parsed summary dict and raw JSON string.
         """
-        if self._gemini_analyzer is None:
-            raise RuntimeError("Gemini analyzer is not initialized.")
+        if self._gemini_client is None:
+            raise RuntimeError("Gemini client is not initialized.")
 
-        result = self._gemini_analyzer.analyze_report(
-            report_text if file_type == "text" else source,
-            file_type=file_type,
+        from google.genai import types as gtypes
+        from config import MODEL_NAME, ANALYSIS_SYSTEM_INSTRUCTION
+
+        config = SUMMARY_MODE_CONFIG[summary_type]
+        mode_prompt = config["prompt"]
+        model_cls = config["model_cls"]
+
+        user_message = (
+            f"{mode_prompt}\n\n--- MEDICAL REPORT ---\n{report_text}\n--- END REPORT ---"
         )
 
-        return {
-            "summary": result.model_dump(),
-            "raw_json": result.model_dump_json(indent=2),
-        }
+        last_exception: Exception | None = None
+        models_to_try = [MODEL_NAME, "gemini-1.5-flash", "gemini-1.5-flash-8b"]
+
+        for model in models_to_try:
+            for attempt in range(3):
+                try:
+                    response = self._gemini_client.models.generate_content(
+                        model=model,
+                        contents=user_message,
+                        config=gtypes.GenerateContentConfig(
+                            system_instruction=ANALYSIS_SYSTEM_INSTRUCTION,
+                            response_mime_type="application/json",
+                            temperature=0.1,
+                        ),
+                    )
+
+                    raw_text = response.text or ""
+                    cleaned = raw_text.strip()
+                    if cleaned.startswith("```json"):
+                        cleaned = cleaned[7:]
+                    if cleaned.startswith("```"):
+                        cleaned = cleaned[3:]
+                    if cleaned.endswith("```"):
+                        cleaned = cleaned[:-3]
+                    cleaned = cleaned.strip()
+
+                    parsed = model_cls.model_validate_json(cleaned)
+                    return {
+                        "summary": parsed.model_dump(),
+                        "raw_json": parsed.model_dump_json(indent=2),
+                    }
+
+                except Exception as e:
+                    last_exception = e
+                    err_str = str(e)
+                    if "503" in err_str or "UNAVAILABLE" in err_str or "429" in err_str:
+                        import time
+                        time.sleep(2 ** attempt)
+                        continue
+                    else:
+                        break
+
+        # Final fallback: use the structured gemini_engine analyzer (Detailed mode)
+        if self._gemini_analyzer is not None:
+            logger.warning("Text-mode Gemini summarization failed; falling back to structured analyzer.")
+            result = self._gemini_analyzer.analyze_report(
+                report_text if file_type == "text" else source,
+                file_type=file_type,
+            )
+            return {
+                "summary": result.model_dump(),
+                "raw_json": result.model_dump_json(indent=2),
+            }
+
+        raise RuntimeError(
+            f"Gemini summarization failed across all models: {str(last_exception)}"
+        )
 
     def process(
         self,

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────
 # Google Gemini Settings
 # ──────────────────────────────────────────────
-GEMINI_MODEL_NAME = "gemini-3.6-flash"
+GEMINI_MODEL_NAME = "gemini-2.0-flash"
 MODEL_NAME = GEMINI_MODEL_NAME  # Backward compatibility alias
 
 # ──────────────────────────────────────────────
