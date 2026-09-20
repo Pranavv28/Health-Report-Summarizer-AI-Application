@@ -807,7 +807,6 @@ st_html("""
           Verified Agent
         </span>
       </div>
-      <div class="agent-meta-role">Official Jotform Healthcare Assistant Template</div>
       <div class="agent-speech-bubble">
         👋 <strong>Hello! I'm your Medical Report AI Agent.</strong><br>
         Upload your lab report or select a pre-loaded sample below. I will extract metrics, decode complex medical terminology into plain English, highlight abnormal biomarkers, and generate questions for your doctor consultation.
