@@ -33,10 +33,10 @@ CSS = """
         --bg-main:            #f4f7fb;
         --surface:            #ffffff;
         --surface-low:        #f8fafc;
-        --border-light:       #e2e8f0;
-        --border-strong:      #cbd5e1;
+        --border-light:       #cbd5e1;
+        --border-strong:      #94a3b8;
         --text-dark:          #0f172a;
-        --text-muted:         #64748b;
+        --text-muted:         #1e293b;
         --emerald-badge:      #059669;
         --amber-badge:        #d97706;
         --rose-badge:         #e11d48;
@@ -270,10 +270,10 @@ CSS = """
     }
     .stat-label {
         font-size: 11px;
-        font-weight: 700;
+        font-weight: 800;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: var(--text-muted);
+        color: #0f172a !important;
         margin-bottom: 4px;
     }
     .stat-value {
@@ -284,19 +284,20 @@ CSS = """
         line-height: 1;
     }
     .stat-subtext {
-        font-size: 0.75rem;
-        color: var(--text-muted);
+        font-size: 0.78rem;
+        color: #1e293b !important;
+        font-weight: 700 !important;
         margin-top: 4px;
     }
     .stat-box-elevated { background: #fffbeb; border-color: #fde68a; }
-    .stat-box-elevated .stat-label { color: #92400e; }
-    .stat-box-elevated .stat-value { color: #b45309; }
+    .stat-box-elevated .stat-label { color: #92400e !important; }
+    .stat-box-elevated .stat-value { color: #b45309 !important; }
     .stat-box-normal { background: #ecfdf5; border-color: #a7f3d0; }
-    .stat-box-normal .stat-label { color: #065f46; }
-    .stat-box-normal .stat-value { color: #047857; }
+    .stat-box-normal .stat-label { color: #065f46 !important; }
+    .stat-box-normal .stat-value { color: #047857 !important; }
     .stat-box-critical { background: #fff1f2; border-color: #fecdd3; }
-    .stat-box-critical .stat-label { color: #9f1239; }
-    .stat-box-critical .stat-value { color: #be123c; }
+    .stat-box-critical .stat-label { color: #9f1239 !important; }
+    .stat-box-critical .stat-value { color: #be123c !important; }
 
     /* ─── Executive Narrative Summary ─── */
     .executive-narrative {
@@ -306,26 +307,27 @@ CSS = """
         border-radius: var(--radius-md);
         padding: 18px 20px;
         font-size: 0.96rem;
-        color: #334155;
+        color: #0f172a;
+        font-weight: 600;
         line-height: 1.65;
     }
 
     /* ─── Biomarker Card ─── */
     .biomarker-card {
         background: #ffffff;
-        border: 1px solid #e2e8f0;
+        border: 1.5px solid #cbd5e1;
         border-radius: var(--radius-md);
         padding: 16px 18px;
         margin-bottom: 12px;
         transition: all 0.2s ease;
     }
     .biomarker-card:hover {
-        border-color: #93c5fd;
-        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.06);
+        border-color: #0066ff;
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.08);
     }
     .biomarker-name {
-        font-size: 0.9rem;
-        font-weight: 700;
+        font-size: 0.95rem;
+        font-weight: 800;
         color: var(--jotform-navy);
     }
     .biomarker-value {
@@ -335,23 +337,24 @@ CSS = """
         line-height: 1;
     }
     .biomarker-unit {
-        font-size: 0.8rem;
-        color: var(--text-muted);
+        font-size: 0.82rem;
+        color: #0f172a !important;
+        font-weight: 700 !important;
         margin-left: 4px;
     }
 
     /* Status Badges */
-    .badge-normal   { display:inline-flex; align-items:center; gap:4px; padding:3px 12px; border-radius:999px; font-size:11px; font-weight:700; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; }
-    .badge-elevated { display:inline-flex; align-items:center; gap:4px; padding:3px 12px; border-radius:999px; font-size:11px; font-weight:700; background:#fffbeb; color:#b45309; border:1px solid #fde68a; }
-    .badge-low      { display:inline-flex; align-items:center; gap:4px; padding:3px 12px; border-radius:999px; font-size:11px; font-weight:700; background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; }
-    .badge-critical { display:inline-flex; align-items:center; gap:4px; padding:3px 12px; border-radius:999px; font-size:11px; font-weight:700; background:#fff1f2; color:#be123c; border:1px solid #fecdd3; }
+    .badge-normal   { display:inline-flex; align-items:center; gap:4px; padding:4px 14px; border-radius:999px; font-size:11px; font-weight:800; background:#ecfdf5; color:#047857; border:1.5px solid #a7f3d0; }
+    .badge-elevated { display:inline-flex; align-items:center; gap:4px; padding:4px 14px; border-radius:999px; font-size:11px; font-weight:800; background:#fffbeb; color:#b45309; border:1.5px solid #fde68a; }
+    .badge-low      { display:inline-flex; align-items:center; gap:4px; padding:4px 14px; border-radius:999px; font-size:11px; font-weight:800; background:#f0f9ff; color:#0369a1; border:1.5px solid #bae6fd; }
+    .badge-critical { display:inline-flex; align-items:center; gap:4px; padding:4px 14px; border-radius:999px; font-size:11px; font-weight:800; background:#fff1f2; color:#be123c; border:1.5px solid #fecdd3; }
 
     /* Visual Range Gauge Bar */
     .gauge-bar {
         width: 100%;
         height: 8px;
         border-radius: 4px;
-        background: #e2e8f0;
+        background: #cbd5e1;
         display: flex;
         overflow: hidden;
         margin-top: 10px;
@@ -380,7 +383,8 @@ CSS = """
         display: flex;
         justify-content: space-between;
         font-size: 11px;
-        color: var(--text-muted);
+        color: #0f172a !important;
+        font-weight: 700 !important;
         margin-top: 4px;
     }
 
@@ -393,12 +397,12 @@ CSS = """
         margin-bottom: 10px;
     }
     .jargon-term {
-        font-size: 0.88rem;
-        font-weight: 700;
+        font-size: 0.9rem;
+        font-weight: 800;
         color: var(--jotform-blue);
         margin-bottom: 4px;
     }
-    .jargon-def { font-size: 0.88rem; color: #334155; margin: 0; line-height: 1.5; }
+    .jargon-def { font-size: 0.9rem; color: #0f172a !important; font-weight: 600; margin: 0; line-height: 1.5; }
 
     .doc-question-card {
         display: flex;
@@ -709,12 +713,12 @@ def render_biomarker_card(b: Biomarker):
             <div class="gauge-pin" style="left:{pin}%;"></div>
         </div>
         <div class="gauge-labels">
-            <span>Reference Range: <strong style="color:#334155;">{b.reference_range}</strong></span>
+            <span>Reference Range: <strong style="color:#0f172a; font-weight:800;">{b.reference_range}</strong></span>
         </div>
 
-        <div style="margin-top:10px; font-size:0.82rem; color:#475569; line-height:1.5;
-                    background:#f8fafc; padding:8px 12px; border-radius:8px;
-                    border-left:3px solid #cbd5e1;">
+        <div style="margin-top:10px; font-size:0.85rem; color:#0f172a; font-weight:600; line-height:1.5;
+                    background:#f0f6ff; padding:8px 12px; border-radius:8px;
+                    border-left:3px solid #0066ff;">
             {b.simple_explanation}
         </div>
     </div>
