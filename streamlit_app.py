@@ -430,41 +430,42 @@ CSS = """
     /* ─── Streamlit UI Controls Customization: High Contrast Tabs ─── */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px !important;
-        background: #e2e8f0 !important;
+        background: #cbd5e1 !important;
         padding: 6px !important;
         border-radius: 12px !important;
         margin-bottom: 16px !important;
     }
     .stTabs [data-baseweb="tab"] {
-        height: 42px !important;
-        border-radius: 8px !important;
-        padding: 0 16px !important;
+        height: 44px !important;
+        border-radius: 10px !important;
+        padding: 0 18px !important;
         background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
+        border: 1.5px solid #94a3b8 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.04) !important;
         transition: all 0.15s ease !important;
     }
     .stTabs [data-baseweb="tab"] p,
     .stTabs [data-baseweb="tab"] span,
     .stTabs [data-baseweb="tab"] div {
-        color: #334155 !important;
-        font-weight: 700 !important;
-        font-size: 0.9rem !important;
+        color: #0f172a !important;
+        font-weight: 800 !important;
+        font-size: 0.92rem !important;
     }
     .stTabs [data-baseweb="tab"]:hover {
-        background: #f1f5f9 !important;
-        border-color: #94a3b8 !important;
+        background: #f0f6ff !important;
+        border-color: #0066ff !important;
     }
     .stTabs [aria-selected="true"] {
-        background: #0066ff !important;
+        background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%) !important;
         border-color: #0066ff !important;
-        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25) !important;
+        box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3) !important;
     }
     .stTabs [aria-selected="true"] p,
     .stTabs [aria-selected="true"] span,
     .stTabs [aria-selected="true"] div {
         color: #ffffff !important;
         font-weight: 800 !important;
-        font-size: 0.9rem !important;
+        font-size: 0.92rem !important;
     }
     .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
