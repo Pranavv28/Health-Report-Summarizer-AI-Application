@@ -31,6 +31,7 @@ from schema import (
     DetailedSummary,
     HighlightedSummary,
 )
+from safety_triage import apply_safety_triage
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,9 @@ Return a JSON object with these fields:
 - "patient_age": age if mentioned, else null
 - "patient_gender": gender if mentioned, else null
 - "test_date": test/report date if mentioned, else null
+- "report_type": "Lab", "Imaging", "Pathology", or "Other"
+- "ordered_by": ordering clinician if mentioned, else null
+- "lab_facility": laboratory or facility if mentioned, else null
 - "patient_summary": 2-3 sentence executive overview
 - "biomarkers": array of objects, each with:
     - "parameter_name": test name
@@ -75,8 +79,15 @@ Return a JSON object with these fields:
 - "medications_or_treatment": array of medications or clinical therapy suggestions
 - "questions_for_doctor": 3-5 recommended questions
 - "lifestyle_wellness_educational_tips": array of health tips
+- "urgency_level": one of "Routine", "Moderate", "High", or "Critical/Emergency"
+- "red_flags": array of report-based urgent concerns; do not invent findings
+- "normal_findings": array of reassuring normal results
+- "recommended_specialists": array of 0-2 objects with "specialty", "reason", "timeline", and "what_to_expect"
+- "immediate_actions": safe non-prescriptive actions for the next 24-48 hours
+- "one_week_actions": safe preparation and follow-up actions for the next week
 
-Be thorough, accurate, compassionate, and non-alarmist.
+Be thorough, accurate, compassionate, and non-alarmist. Do not diagnose, prescribe,
+or tell the patient to start or stop medication. Use only facts visible in the report.
 """
 
 HIGHLIGHTED_PROMPT = """
@@ -195,6 +206,22 @@ class MedicalSummarizer:
                 f"Choose from: {list(SUMMARY_MODE_CONFIG.keys())}"
             )
 
+        if file_type.lower() in {"png", "jpg", "jpeg"}:
+            if self._provider == "gemini" and self._gemini_analyzer is not None:
+                if not isinstance(source, bytes):
+                    raise ReportParsingError("Image reports must be supplied as file bytes.")
+                result = self._gemini_analyzer.analyze_report(source, file_type=file_type.lower())
+                return self._apply_safety_triage(
+                    {
+                        "summary": result.model_dump(),
+                        "raw_json": result.model_dump_json(indent=2),
+                    }
+                )
+            raise ReportParsingError(
+                "Image report analysis requires a configured Gemini provider. "
+                "Please upload a PDF/TXT report or paste the report text."
+            )
+
         # Parse the report text
         report_text = parse_report(source, file_type=file_type)
 
@@ -202,10 +229,10 @@ class MedicalSummarizer:
             # Image-based PDF — pass raw bytes to Gemini (Claude doesn't support PDF bytes)
             if self._provider == "gemini" and self._gemini_analyzer is not None:
                 result = self._gemini_analyzer.analyze_report(source, file_type="pdf")
-                return {
+                return self._apply_safety_triage({
                     "summary": result.model_dump(),
                     "raw_json": result.model_dump_json(indent=2),
-                }
+                })
             else:
                 raise ReportParsingError(
                     "PDF appears to be image-based (scanned). Text extraction failed. "
@@ -214,11 +241,25 @@ class MedicalSummarizer:
 
         # Route to the appropriate provider
         if self._provider == "groq":
-            return self._groq_summarizer.summarize(report_text, summary_type)
+            return self._apply_safety_triage(
+                self._groq_summarizer.summarize(report_text, summary_type)
+            )
         elif self._provider == "gemini":
-            return self._summarize_with_gemini(report_text, source, file_type, summary_type)
+            return self._apply_safety_triage(
+                self._summarize_with_gemini(report_text, source, file_type, summary_type)
+            )
         else:
-            return self._summarize_with_claude(report_text, summary_type)
+            return self._apply_safety_triage(
+                self._summarize_with_claude(report_text, summary_type)
+            )
+
+    @staticmethod
+    def _apply_safety_triage(result: dict[str, Any]) -> dict[str, Any]:
+        """Add deterministic emergency escalation to provider-produced structured output."""
+        summary = apply_safety_triage(dict(result["summary"]))
+        result["summary"] = summary
+        result["raw_json"] = json.dumps(summary, indent=2, ensure_ascii=False)
+        return result
 
     def _summarize_with_claude(
         self, report_text: str, summary_type: str

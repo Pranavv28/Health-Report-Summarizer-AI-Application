@@ -23,30 +23,30 @@ CSS = """
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
 
     :root {
-        --jotform-navy:       #0a1526;
-        --jotform-dark:       #182436;
-        --jotform-orange:     #ff6100;
-        --jotform-blue:       #0066ff;
-        --jotform-blue-light: #e6f0ff;
-        --jotform-teal:       #0d9488;
-        --jotform-teal-light: #f0fdfa;
-        --bg-main:            #f4f7fb;
+        --jotform-navy:       #064e3b;
+        --jotform-dark:       #047857;
+        --jotform-orange:     #059669;
+        --jotform-blue:       #059669;
+        --jotform-blue-light: #f0fdf4;
+        --jotform-teal:       #10b981;
+        --jotform-teal-light: #ecfdf5;
+        --bg-main:            #f4f9f5;
         --surface:            #ffffff;
-        --surface-low:        #f8fafc;
-        --border-light:       #cbd5e1;
-        --border-strong:      #94a3b8;
-        --text-dark:          #0f172a;
-        --text-muted:         #1e293b;
+        --surface-low:        #f8faf7;
+        --border-light:       #d1fae5;
+        --border-strong:      #059669;
+        --text-dark:          #0f291e;
+        --text-muted:         #065f46;
         --emerald-badge:      #059669;
         --amber-badge:        #d97706;
         --rose-badge:         #e11d48;
-        --shadow-sm:          0 2px 6px rgba(10,21,38,0.04);
-        --shadow-md:          0 10px 30px -5px rgba(10,21,38,0.08);
-        --shadow-lg:          0 20px 40px -10px rgba(10,21,38,0.12);
+        --shadow-sm:          0 2px 8px rgba(5,150,105,0.06);
+        --shadow-md:          0 8px 24px -4px rgba(5,150,105,0.10);
+        --shadow-lg:          0 16px 36px -8px rgba(5,150,105,0.14);
         --radius-sm:          8px;
         --radius-md:          12px;
         --radius-lg:          16px;
-        --radius-xl:          24px;
+        --radius-xl:          20px;
         --font-body:          'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         --font-display:       'Outfit', 'Inter', sans-serif;
     }
@@ -65,17 +65,17 @@ CSS = """
     #MainMenu, footer { display: none !important; }
     .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 1400px; }
 
-    /* ─── Top Jotform Navigation Header Bar ─── */
+    /* ─── Top Navigation Header Bar (Clean Green Theme) ─── */
     .jotform-nav {
-        background: linear-gradient(135deg, var(--jotform-navy) 0%, #1e293b 100%);
+        background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
         border-radius: var(--radius-lg);
         padding: 16px 24px;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        box-shadow: var(--shadow-md);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 20px rgba(6, 78, 59, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.15);
     }
     .jotform-brand {
         display: flex;
@@ -83,14 +83,14 @@ CSS = """
         gap: 12px;
     }
     .jotform-logo-icon {
-        width: 42px; height: 42px;
-        background: linear-gradient(135deg, var(--jotform-orange) 0%, #ff8533 100%);
+        width: 44px; height: 44px;
+        background: #ffffff;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;
-        box-shadow: 0 4px 12px rgba(255,97,0,0.35);
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .jotform-brand-title {
         font-family: var(--font-display);
@@ -104,19 +104,20 @@ CSS = """
         gap: 8px;
     }
     .jotform-brand-tag {
-        background: var(--jotform-orange);
-        color: white;
+        background: #10b981;
+        color: #064e3b;
         font-size: 10px;
         font-weight: 800;
         letter-spacing: 0.08em;
-        padding: 3px 8px;
+        padding: 3px 10px;
         border-radius: 999px;
         text-transform: uppercase;
     }
     .jotform-brand-subtitle {
-        font-size: 0.8rem;
-        color: #94a3b8;
+        font-size: 0.82rem;
+        color: #a7f3d0;
         margin: 2px 0 0 0;
+        font-weight: 500;
     }
 
     .jotform-status-badges {
@@ -131,16 +132,17 @@ CSS = """
         padding: 6px 14px;
         border-radius: 999px;
         font-size: 12px;
-        font-weight: 600;
-        background: rgba(255, 255, 255, 0.08);
-        color: #e2e8f0;
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(4px);
     }
     .jf-badge-active {
-        background: rgba(13, 148, 136, 0.2);
-        color: #5eead4;
-        border-color: rgba(45, 212, 191, 0.3);
+        background: #ffffff;
+        color: #064e3b;
+        font-weight: 800;
+        border-color: #ffffff;
     }
     .live-dot {
         width: 8px; height: 8px;
@@ -155,10 +157,10 @@ CSS = """
         100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
-    /* ─── Jotform Agent Greeting & Hero Card ─── */
+    /* ─── Clean Agent Greeting & Hero Card ─── */
     .agent-hero-card {
-        background: var(--surface);
-        border: 1px solid var(--border-light);
+        background: #ffffff;
+        border: 1.5px solid #d1fae5;
         border-radius: var(--radius-xl);
         padding: 24px 28px;
         margin-bottom: 24px;
@@ -171,7 +173,7 @@ CSS = """
         position: absolute;
         top: 0; left: 0; right: 0;
         height: 5px;
-        background: linear-gradient(90deg, var(--jotform-orange) 0%, var(--jotform-blue) 50%, var(--jotform-teal) 100%);
+        background: linear-gradient(90deg, #10b981 0%, #059669 50%, #047857 100%);
     }
 
     .agent-profile {
@@ -182,12 +184,12 @@ CSS = """
     .agent-avatar {
         width: 56px; height: 56px;
         border-radius: 16px;
-        background: linear-gradient(135deg, #0066ff 0%, #0d9488 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.8rem;
-        box-shadow: 0 8px 20px rgba(0, 102, 255, 0.25);
+        box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3);
         flex-shrink: 0;
         position: relative;
     }
@@ -202,8 +204,8 @@ CSS = """
     .agent-meta-name {
         font-family: var(--font-display);
         font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--jotform-navy);
+        font-weight: 800;
+        color: #064e3b;
         margin: 0 0 2px 0;
         display: flex;
         align-items: center;
@@ -211,26 +213,27 @@ CSS = """
     }
     .agent-meta-role {
         font-size: 0.85rem;
-        color: var(--text-muted);
-        font-weight: 500;
+        color: #065f46;
+        font-weight: 600;
         margin-bottom: 12px;
     }
 
     .agent-speech-bubble {
-        background: var(--jotform-blue-light);
-        border: 1px solid #cce0ff;
+        background: #f0fdf4;
+        border: 1.5px solid #a7f3d0;
         border-radius: 14px;
         padding: 14px 18px;
         font-size: 0.95rem;
-        color: #0044b3;
+        color: #064e3b;
         line-height: 1.6;
+        font-weight: 600;
         position: relative;
     }
 
     /* ─── Jotform Card Containers ─── */
     .jotform-card {
-        background: var(--surface);
-        border: 1px solid var(--border-light);
+        background: #ffffff;
+        border: 1.5px solid #d1fae5;
         border-radius: var(--radius-xl);
         padding: 24px;
         box-shadow: var(--shadow-sm);
@@ -239,7 +242,7 @@ CSS = """
     }
     .jotform-card:hover {
         box-shadow: var(--shadow-md);
-        border-color: #cbd5e1;
+        border-color: #059669;
     }
     .card-title-bar {
         display: flex;
@@ -247,13 +250,13 @@ CSS = """
         justify-content: space-between;
         margin-bottom: 16px;
         padding-bottom: 12px;
-        border-bottom: 1px solid var(--border-light);
+        border-bottom: 1.5px solid #d1fae5;
     }
     .card-title-text {
         font-family: var(--font-display);
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--jotform-navy);
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #064e3b;
         display: flex;
         align-items: center;
         gap: 10px;
@@ -262,8 +265,8 @@ CSS = """
 
     /* ─── Stat Metric Chips ─── */
     .stat-box {
-        background: var(--surface-low);
-        border: 1px solid var(--border-light);
+        background: #f8faf7;
+        border: 1.5px solid #d1fae5;
         border-radius: var(--radius-md);
         padding: 16px;
         text-align: left;
@@ -273,19 +276,19 @@ CSS = """
         font-weight: 800;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: #0f172a !important;
+        color: #065f46 !important;
         margin-bottom: 4px;
     }
     .stat-value {
         font-family: var(--font-display);
         font-size: 1.8rem;
         font-weight: 800;
-        color: var(--text-dark);
+        color: #0f291e;
         line-height: 1;
     }
     .stat-subtext {
         font-size: 0.78rem;
-        color: #1e293b !important;
+        color: #065f46 !important;
         font-weight: 700 !important;
         margin-top: 4px;
     }
@@ -301,13 +304,13 @@ CSS = """
 
     /* ─── Executive Narrative Summary ─── */
     .executive-narrative {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-left: 4px solid var(--jotform-blue);
+        background: #f0fdf4;
+        border: 1.5px solid #a7f3d0;
+        border-left: 5px solid #059669;
         border-radius: var(--radius-md);
         padding: 18px 20px;
         font-size: 0.96rem;
-        color: #0f172a;
+        color: #0f291e;
         font-weight: 600;
         line-height: 1.65;
     }
@@ -315,20 +318,20 @@ CSS = """
     /* ─── Biomarker Card ─── */
     .biomarker-card {
         background: #ffffff;
-        border: 1.5px solid #cbd5e1;
+        border: 1.5px solid #d1fae5;
         border-radius: var(--radius-md);
         padding: 16px 18px;
         margin-bottom: 12px;
         transition: all 0.2s ease;
     }
     .biomarker-card:hover {
-        border-color: #0066ff;
-        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.08);
+        border-color: #059669;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.12);
     }
     .biomarker-name {
         font-size: 0.95rem;
         font-weight: 800;
-        color: var(--jotform-navy);
+        color: #064e3b;
     }
     .biomarker-value {
         font-family: var(--font-display);
@@ -338,7 +341,7 @@ CSS = """
     }
     .biomarker-unit {
         font-size: 0.82rem;
-        color: #0f172a !important;
+        color: #0f291e !important;
         font-weight: 700 !important;
         margin-left: 4px;
     }
@@ -354,7 +357,7 @@ CSS = """
         width: 100%;
         height: 8px;
         border-radius: 4px;
-        background: #cbd5e1;
+        background: #e2e8f0;
         display: flex;
         overflow: hidden;
         margin-top: 10px;
@@ -375,7 +378,7 @@ CSS = """
         width: 14px; height: 14px;
         border-radius: 50%;
         background: #ffffff;
-        border: 2.5px solid #0f172a;
+        border: 2.5px solid #064e3b;
         box-shadow: 0 2px 5px rgba(0,0,0,0.25);
         transform: translateX(-50%);
     }
@@ -383,33 +386,33 @@ CSS = """
         display: flex;
         justify-content: space-between;
         font-size: 11px;
-        color: #0f172a !important;
+        color: #0f291e !important;
         font-weight: 700 !important;
         margin-top: 4px;
     }
 
     /* ─── Jargon Decoder & Doctor Questions Cards ─── */
     .jargon-box {
-        background: var(--surface-low);
-        border: 1px solid var(--border-light);
+        background: #f0fdf4;
+        border: 1.5px solid #a7f3d0;
         border-radius: var(--radius-md);
         padding: 14px 16px;
         margin-bottom: 10px;
     }
     .jargon-term {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 800;
-        color: var(--jotform-blue);
+        color: #059669;
         margin-bottom: 4px;
     }
-    .jargon-def { font-size: 0.9rem; color: #0f172a !important; font-weight: 600; margin: 0; line-height: 1.5; }
+    .jargon-def { font-size: 0.9rem; color: #0f291e !important; font-weight: 600; margin: 0; line-height: 1.5; }
 
     .doc-question-card {
         display: flex;
         align-items: flex-start;
         gap: 12px;
-        background: var(--surface-low);
-        border: 1px solid var(--border-light);
+        background: #ffffff;
+        border: 1.5px solid #d1fae5;
         border-radius: var(--radius-md);
         padding: 14px 16px;
         margin-bottom: 10px;
@@ -417,8 +420,9 @@ CSS = """
     .doc-question-num {
         width: 26px; height: 26px;
         border-radius: 50%;
-        background: var(--jotform-blue-light);
-        color: var(--jotform-blue);
+        background: #ecfdf5;
+        color: #059669;
+        border: 1.5px solid #a7f3d0;
         font-weight: 800;
         font-size: 12px;
         display: flex;
@@ -427,12 +431,13 @@ CSS = """
         flex-shrink: 0;
     }
 
-    /* ─── Streamlit UI Controls Customization: High Contrast BaseWeb Tabs ─── */
+    /* ─── High Contrast Green BaseWeb Tabs ─── */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px !important;
-        background: #cbd5e1 !important;
+        background: #e6f4ea !important;
         padding: 6px !important;
         border-radius: 12px !important;
+        border: 1.5px solid #a7f3d0 !important;
         margin-bottom: 16px !important;
     }
     .stTabs [data-baseweb="tab"],
@@ -441,8 +446,8 @@ CSS = """
         border-radius: 10px !important;
         padding: 0 18px !important;
         background: #ffffff !important;
-        border: 1.5px solid #94a3b8 !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.04) !important;
+        border: 1.5px solid #a7f3d0 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03) !important;
         transition: all 0.15s ease !important;
     }
     .stTabs [data-baseweb="tab"] *,
@@ -453,22 +458,22 @@ CSS = """
     div[data-baseweb="tab-list"] button p,
     div[data-baseweb="tab-list"] button span,
     div[data-baseweb="tab-list"] button div {
-        color: #0f172a !important;
-        -webkit-text-fill-color: #0f172a !important;
+        color: #064e3b !important;
+        -webkit-text-fill-color: #064e3b !important;
         font-weight: 800 !important;
         font-size: 0.95rem !important;
         opacity: 1 !important;
     }
     .stTabs [data-baseweb="tab"]:hover,
     .stTabs button[role="tab"]:hover {
-        background: #f0f6ff !important;
-        border-color: #0066ff !important;
+        background: #f0fdf4 !important;
+        border-color: #059669 !important;
     }
     .stTabs [aria-selected="true"],
     .stTabs button[role="tab"][aria-selected="true"] {
-        background: linear-gradient(135deg, #0066ff 0%, #0284c7 100%) !important;
-        border-color: #0066ff !important;
-        box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3) !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        border-color: #059669 !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;
     }
     .stTabs [aria-selected="true"] *,
     .stTabs button[role="tab"][aria-selected="true"] *,
@@ -491,14 +496,14 @@ CSS = """
     [data-testid="stRadio"] label p,
     [data-testid="stRadio"] label span,
     [data-testid="stRadio"] [data-testid="stMarkdownContainer"] p {
-        color: #0f172a !important;
+        color: #0f291e !important;
         font-size: 0.92rem !important;
         font-weight: 700 !important;
     }
     /* Selected radio dot colour */
     [data-testid="stRadio"] [role="radio"][aria-checked="true"] {
-        border-color: var(--jotform-blue) !important;
-        background: var(--jotform-blue) !important;
+        border-color: #059669 !important;
+        background: #059669 !important;
     }
     /* Summary mode radio row — compact pill style */
     .summary-mode-row [data-testid="stRadio"] > div {
@@ -509,7 +514,7 @@ CSS = """
     }
     .summary-mode-row [data-testid="stRadio"] label {
         background: #ffffff !important;
-        border: 2px solid #cbd5e1 !important;
+        border: 2px solid #a7f3d0 !important;
         border-radius: 12px !important;
         padding: 8px 18px !important;
         cursor: pointer;
@@ -517,62 +522,62 @@ CSS = """
         box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     }
     .summary-mode-row [data-testid="stRadio"] label:hover {
-        border-color: var(--jotform-blue) !important;
-        background: var(--jotform-blue-light) !important;
+        border-color: #059669 !important;
+        background: #f0fdf4 !important;
     }
 
-    /* Jotform Orange / Blue Action Buttons */
+    /* Action Buttons (Emerald Green Palette) */
     .stButton>button {
-        background: linear-gradient(135deg, var(--jotform-blue) 0%, #0284c7 100%) !important;
-        color: white !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        color: #ffffff !important;
         border-radius: var(--radius-md) !important;
         border: none !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         font-size: 0.95rem !important;
         padding: 12px 24px !important;
-        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25) !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3) !important;
         transition: all 0.2s ease !important;
     }
     .stButton>button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 6px 16px rgba(0, 102, 255, 0.35) !important;
+        box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45) !important;
     }
     /* Primary button extra pop */
     .stButton>button[kind="primary"] {
-        background: linear-gradient(135deg, #ff6100 0%, #ff8533 100%) !important;
-        box-shadow: 0 4px 14px rgba(255,97,0,0.35) !important;
-        font-size: 1rem !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        box-shadow: 0 4px 16px rgba(5, 150, 105, 0.4) !important;
+        font-size: 1.05rem !important;
         padding: 14px 24px !important;
     }
     .stButton>button[kind="primary"]:hover {
-        box-shadow: 0 6px 20px rgba(255,97,0,0.5) !important;
+        box-shadow: 0 6px 22px rgba(5, 150, 105, 0.55) !important;
     }
 
     .stDownloadButton>button {
         background: #ffffff !important;
-        color: var(--jotform-navy) !important;
-        border: 1px solid var(--border-strong) !important;
+        color: #059669 !important;
+        border: 2px solid #059669 !important;
         border-radius: var(--radius-md) !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         font-size: 0.9rem !important;
         padding: 10px 20px !important;
         box-shadow: var(--shadow-sm) !important;
         transition: all 0.2s ease !important;
     }
     .stDownloadButton>button:hover {
-        background: var(--jotform-blue-light) !important;
-        border-color: var(--jotform-blue) !important;
-        color: var(--jotform-blue) !important;
+        background: #f0fdf4 !important;
+        border-color: #047857 !important;
+        color: #047857 !important;
     }
 
     [data-testid="stFileUploadDropzone"] {
-        background: var(--surface-low) !important;
-        border: 2px dashed #cbd5e1 !important;
+        background: #f8faf7 !important;
+        border: 2px dashed #a7f3d0 !important;
         border-radius: var(--radius-lg) !important;
     }
     [data-testid="stFileUploadDropzone"]:hover {
-        border-color: var(--jotform-blue) !important;
-        background: var(--jotform-blue-light) !important;
+        border-color: #059669 !important;
+        background: #f0fdf4 !important;
     }
 
     /* ─── Left Intake Panel: Sticky Sidebar ─── */
@@ -601,18 +606,18 @@ CSS = """
     [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar-thumb,
     [data-testid="column"]:first-child::-webkit-scrollbar-thumb,
     div[data-testid="stColumn"]:first-child::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: #a7f3d0;
         border-radius: 4px;
     }
 
     /* ─── Empty State Placeholder ─── */
     .empty-agent-state {
-        background: var(--surface);
-        border: 1px dashed #cbd5e1;
+        background: #ffffff;
+        border: 2px dashed #a7f3d0;
         border-radius: var(--radius-xl);
         padding: 60px 24px;
         text-align: center;
-        color: var(--text-muted);
+        color: #065f46;
     }
     .empty-agent-icon {
         font-size: 3rem;
@@ -623,13 +628,13 @@ CSS = """
     [data-testid="stStatusWidget"],
     [data-testid="stSpinner"],
     .stSpinner {
-        color: #0a1526 !important;
+        color: #064e3b !important;
         background-color: #ffffff !important;
-        border: 1.5px solid #cbd5e1 !important;
+        border: 1.5px solid #a7f3d0 !important;
         border-radius: 12px !important;
         padding: 12px 18px !important;
         margin: 12px 0 !important;
-        box-shadow: 0 4px 12px rgba(10,21,38,0.08) !important;
+        box-shadow: 0 4px 12px rgba(5,150,105,0.08) !important;
     }
     [data-testid="stStatusWidget"] p,
     [data-testid="stStatusWidget"] span,
@@ -640,32 +645,133 @@ CSS = """
     .stSpinner p,
     .stSpinner span,
     .stSpinner div {
-        color: #0a1526 !important;
-        font-weight: 700 !important;
+        color: #064e3b !important;
+        font-weight: 800 !important;
         font-size: 0.95rem !important;
     }
 
     /* ─── Chat Message High Contrast & Font Size Fix ─── */
     [data-testid="stChatMessage"] {
         background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
+        border: 1.5px solid #d1fae5 !important;
         border-radius: 12px !important;
         padding: 12px 16px !important;
         margin-bottom: 10px !important;
-        box-shadow: 0 2px 6px rgba(10,21,38,0.04) !important;
+        box-shadow: 0 2px 6px rgba(5,150,105,0.04) !important;
     }
     [data-testid="stChatMessage"] p,
     [data-testid="stChatMessage"] span,
     [data-testid="stChatMessage"] div,
     [data-testid="stChatMessageContent"] {
-        color: #0f172a !important;
+        color: #0f291e !important;
         font-size: 0.92rem !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
         line-height: 1.6 !important;
     }
     [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-        background-color: #f0f6ff !important;
-        border-color: #bae6fd !important;
+        background-color: #f0fdf4 !important;
+        border-color: #a7f3d0 !important;
+    }
+
+    /* ─── Universal Responsive Device Format Compatibility & Media Queries ─── */
+    *, ::before, ::after {
+        box-sizing: border-box !important;
+    }
+    
+    .stApp, .block-container, .jotform-card, .agent-hero-card, .biomarker-card, .stat-box {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    /* Horizontal scroll for table elements on touch screens */
+    .stTable, [data-testid="stTable"], .element-container iframe, table {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* BaseWeb Tabs horizontal touch scrolling on mobile devices */
+    @media (max-width: 768px) {
+        .stTabs [data-baseweb="tab-list"] {
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            white-space: nowrap !important;
+        }
+        .stTabs [data-baseweb="tab"],
+        .stTabs button[role="tab"] {
+            flex: 0 0 auto !important;
+            padding: 0 12px !important;
+            font-size: 0.85rem !important;
+        }
+    }
+
+    /* Tablet & Smartphone (<= 992px) Layout Fixes */
+    @media (max-width: 992px) {
+        .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-top: 0.5rem !important;
+        }
+
+        /* Disable fixed sticky sidebar height clipping on tablets and smartphones */
+        [data-testid="stHorizontalBlock"] > div:first-child,
+        [data-testid="column"]:first-child,
+        div[data-testid="stColumn"]:first-child {
+            position: static !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+            width: 100% !important;
+            margin-bottom: 20px !important;
+        }
+
+        .jotform-nav {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+            padding: 16px !important;
+        }
+        .jotform-status-badges {
+            flex-wrap: wrap !important;
+            width: 100% !important;
+        }
+
+        .agent-profile {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+        }
+        .agent-avatar {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.4rem !important;
+        }
+    }
+
+    /* Mobile Phone Devices (<= 576px) Fine-tuning */
+    @media (max-width: 576px) {
+        .jotform-brand-title {
+            font-size: 1.1rem !important;
+        }
+        .jotform-brand-subtitle {
+            font-size: 0.75rem !important;
+        }
+        .stat-value {
+            font-size: 1.4rem !important;
+        }
+        .biomarker-value {
+            font-size: 1.2rem !important;
+        }
+        .agent-hero-card, .jotform-card {
+            padding: 16px !important;
+            border-radius: var(--radius-lg) !important;
+        }
+        .stButton > button, .stDownloadButton > button {
+            width: 100% !important;
+            min-height: 44px !important;
+        }
     }
 </style>
 """
@@ -734,10 +840,10 @@ def render_biomarker_card(b: Biomarker):
             <span>Reference Range: <strong style="color:#0f172a; font-weight:800;">{b.reference_range}</strong></span>
         </div>
 
-        <div style="margin-top:10px; font-size:0.85rem; color:#0f172a; font-weight:600; line-height:1.5;
-                    background:#f0f6ff; padding:8px 12px; border-radius:8px;
-                    border-left:3px solid #0066ff;">
-            {b.simple_explanation}
+        <div style="margin-top:10px; font-size:0.88rem; color:#064e3b; font-weight:600; line-height:1.55;
+                    background:#f0fdf4; padding:10px 14px; border-radius:10px;
+                    border-left:3.5px solid #059669;">
+            💡 <strong>Explanation:</strong> {b.simple_explanation}
         </div>
     </div>
     """)
@@ -848,15 +954,15 @@ col_intake, col_output = st.columns([1, 1.4], gap="large")
 # ══════════════════════════════════════════════════════════════════════════════
 with col_intake:
     st_html("""
-    <div style="background: linear-gradient(135deg, #0a1526 0%, #1e293b 100%);
+    <div style="background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
                 border-radius:14px; padding:16px 20px; margin-bottom:16px;
-                border:1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(10,21,38,0.15);">
+                border:1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 14px rgba(6,78,59,0.25);">
         <div style="display:flex; align-items:center; justify-content:space-between;">
             <h3 style="font-family:'Outfit',sans-serif; font-size:1.15rem; font-weight:800;
                        color:#ffffff; margin:0; display:flex; align-items:center; gap:10px;">
                 📥 Diagnostic Data Ingestion
             </h3>
-            <span style="font-size:11px; font-weight:800; color:#0066ff; background:#ffffff;
+            <span style="font-size:11px; font-weight:800; color:#064e3b; background:#ffffff;
                          padding:4px 12px; border-radius:999px; text-transform:uppercase; letter-spacing:0.05em;">Agent Intake Form</span>
         </div>
     </div>
@@ -1073,7 +1179,7 @@ with col_output:
 
         if p_bits:
             st_html(f"""
-            <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:12px; padding:10px 16px; margin-bottom:14px; font-size:0.88rem; color:#0369a1; display:flex; gap:16px; flex-wrap:wrap;">
+                  <div style="background:#f0fdf4; border:1.5px solid #a7f3d0; border-radius:12px; padding:12px 18px; margin-bottom:16px; font-size:0.9rem; color:#064e3b; font-weight:700; display:flex; gap:18px; flex-wrap:wrap; box-shadow:var(--shadow-sm);">
                 <span>📋 {' &nbsp;·&nbsp; '.join(p_bits)}</span>
             </div>
             """)
@@ -1118,18 +1224,18 @@ with col_output:
 
         # Executive Summary Narrative
         st_html(f"""
-        <div style="background: #ffffff; border: 2px solid #0066ff; border-radius: 16px;
-                    padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,102,255,0.08);">
+        <div style="background: #ffffff; border: 2px solid #059669; border-radius: var(--radius-xl);
+                    padding: 22px 26px; margin-bottom: 22px; box-shadow: var(--shadow-md);">
             <div style="display:flex; align-items:center; justify-content:space-between;
-                        margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
-                <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:800;
-                           color:#0a1526; margin:0; display:flex; align-items:center; gap:10px;">
+                        margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1.5px solid #d1fae5;">
+                <h3 style="font-family:var(--font-display); font-size:1.25rem; font-weight:800;
+                           color:#064e3b; margin:0; display:flex; align-items:center; gap:10px;">
                     📋 Executive Diagnostic Synthesis
                 </h3>
-                <span style="font-size:11px; font-weight:800; color:#0066ff; background:#e6f0ff;
-                             padding:4px 12px; border-radius:999px;">Clinical Overview</span>
+                <span style="font-size:11px; font-weight:800; color:#064e3b; background:#ecfdf5;
+                             border:1px solid #a7f3d0; padding:4px 12px; border-radius:999px; text-transform:uppercase; letter-spacing:0.05em;">Clinical Overview</span>
             </div>
-            <div style="font-size:1.02rem; color:#1e293b; line-height:1.7; font-weight:500;">
+            <div style="font-size:1.02rem; color:#0f291e; line-height:1.75; font-weight:600;">
                 {analysis.patient_summary}
             </div>
         </div>
@@ -1157,8 +1263,8 @@ with col_output:
             if analysis.key_findings:
                 for finding in analysis.key_findings:
                     st_html(f"""
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:8px; font-size:0.9rem; color:#334155; display:flex; gap:10px;">
-                        <span style="color:#0066ff;">📌</span> <span>{finding}</span>
+                    <div style="background:#f0fdf4; border:1.5px solid #a7f3d0; border-radius:10px; padding:12px 16px; margin-bottom:8px; font-size:0.9rem; color:#064e3b; font-weight:600; display:flex; gap:10px;">
+                        <span style="color:#059669;">📌</span> <span>{finding}</span>
                     </div>""")
             else:
                 st.info("No key findings reported.")

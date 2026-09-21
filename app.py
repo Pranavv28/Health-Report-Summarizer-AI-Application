@@ -47,9 +47,13 @@ def summarize_report(
 
         if file_obj is not None:
             path = Path(file_obj) if isinstance(file_obj, str) else Path(file_obj.name)
-            if path.suffix.lower() == ".pdf":
+            suffix = path.suffix.lower()
+            if suffix == ".pdf":
                 source = path.read_bytes()
                 file_type = "pdf"
+            elif suffix in {".png", ".jpg", ".jpeg"}:
+                source = path.read_bytes()
+                file_type = suffix.lstrip(".")
             else:
                 source = path.read_text(encoding="utf-8", errors="ignore")
                 file_type = "text"
@@ -88,19 +92,28 @@ def _format_summary_markdown(data: dict[str, Any], mode: str) -> str:
     title = data.get("report_title", "Health Report Summary")
     lines.append(f"## {title}\n")
 
-    # 1. 📋 PATIENT INFO
+    # 1. Report metadata and patient context
     name = data.get("patient_name")
     age = data.get("patient_age")
     gender = data.get("patient_gender")
     date = data.get("test_date")
-    patient_bits = []
+    patient_bits: list[str] = []
     if name: patient_bits.append(f"**Name:** {name}")
     if age: patient_bits.append(f"**Age:** {age}")
     if gender: patient_bits.append(f"**Gender:** {gender}")
     if date: patient_bits.append(f"**Date:** {date}")
 
+    metadata = [
+        f"**Type:** {data.get('report_type', 'Other')}",
+        f"**Date:** {date or 'Not stated'}",
+        f"**Ordered By:** {data.get('ordered_by') or 'Not stated'}",
+        f"**Lab/Facility:** {data.get('lab_facility') or 'Not stated'}",
+    ]
+    lines.append("## 📋 REPORT SUMMARY\n**Report Metadata**\n" + "\n".join(
+        f"- {item}" for item in metadata
+    ) + "\n")
     if patient_bits:
-        lines.append(f"### 📋 PATIENT INFO\n{' &nbsp;·&nbsp; '.join(patient_bits)}\n")
+        lines.append(f"**Patient Context**\n{' &nbsp;·&nbsp; '.join(patient_bits)}\n")
 
     # Overview text
     overview = data.get("patient_summary", data.get("overview", ""))
@@ -167,6 +180,52 @@ def _format_summary_markdown(data: dict[str, Any], mode: str) -> str:
                     lines.append(f"- 🌱 {t}")
             lines.append("")
 
+        urgency = data.get("urgency_level", "Routine")
+        red_flags = data.get("red_flags", [])
+        normal_findings = data.get("normal_findings", [])
+        lines.append("### ⚠️ PRIORITY ASSESSMENT")
+        lines.append(f"**Urgency Level:** {urgency}")
+        if red_flags:
+            lines.append("\n**Red Flags:**")
+            lines.extend(f"- {flag}" for flag in red_flags[:4])
+        if normal_findings:
+            lines.append("\n**Normal Findings (reassuring):**")
+            lines.extend(f"- {finding}" for finding in normal_findings[:4])
+        lines.append("")
+
+        specialists = data.get("recommended_specialists", [])
+        if specialists:
+            lines.append("### 👨‍⚕️ RECOMMENDED SPECIALISTS")
+            for index, specialist in enumerate(specialists[:2], start=1):
+                if isinstance(specialist, dict):
+                    specialty = specialist.get("specialty", "Specialist")
+                    reason = specialist.get("reason", "")
+                    timeline = specialist.get("timeline", "Routine")
+                    expectation = specialist.get("what_to_expect", "")
+                else:
+                    specialty = specialist.specialty
+                    reason = specialist.reason
+                    timeline = specialist.timeline
+                    expectation = specialist.what_to_expect
+                lines.append(f"{index}. **{specialty}**")
+                lines.append(f"   - Reason: {reason}")
+                lines.append(f"   - Timeline: {timeline}")
+                if expectation:
+                    lines.append(f"   - What to expect: {expectation}")
+            lines.append("")
+
+        immediate_actions = data.get("immediate_actions", [])
+        one_week_actions = data.get("one_week_actions", [])
+        if immediate_actions or one_week_actions:
+            lines.append("### 💊 NEXT STEPS & RECOMMENDATIONS")
+            if immediate_actions:
+                lines.append("**Immediate Actions (within 24–48 hours):**")
+                lines.extend(f"- [ ] {action}" for action in immediate_actions[:4])
+            if one_week_actions:
+                lines.append("\n**Within 1 Week:**")
+                lines.extend(f"- [ ] {action}" for action in one_week_actions[:4])
+            lines.append("")
+
     elif mode == "Highlighted":
         # 2. 🩺 KEY FINDINGS / RISK FLAGS
         flags = data.get("risk_flags", [])
@@ -200,7 +259,13 @@ def _format_summary_markdown(data: dict[str, Any], mode: str) -> str:
             for q in questions[:3]:
                 lines.append(f"- [ ] Consult Doctor: {q}")
 
-    lines.append("\n---\n*⚕️ AI-generated summary — for educational use only. Consult your doctor.*")
+    if data.get("urgency_level") == "Critical/Emergency":
+        lines.append("\n> 🚨 **Emergency guidance:** Seek urgent in-person medical care now. "
+                     "If you have chest pain, difficulty breathing, severe bleeding, fainting, "
+                     "seizures, confusion, or feel seriously unwell, call local emergency services.")
+    lines.append("\n---\n## ⚕️ IMPORTANT DISCLAIMER\n"
+                 "This summary is for educational purposes only. It is not medical advice, diagnosis, "
+                 "or treatment. Always consult a qualified doctor before making health decisions.")
     return "\n".join(lines)
 
 
@@ -273,133 +338,159 @@ def load_sample(sample_name: str) -> str:
 
 LIGHT_CSS = """
 /* ── Google Font ── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 body, .gradio-container {
     font-family: 'Inter', sans-serif !important;
-    background: #F8FAFC !important;
+    background: #F4F9F5 !important;
 }
 
 /* ── Header banner ── */
 .app-header {
-    background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 50%, #06B6D4 100%);
+    background: linear-gradient(135deg, #064E3B 0%, #047857 100%);
     border-radius: 16px;
     padding: 32px 40px;
     margin-bottom: 20px;
     text-align: center;
-    box-shadow: 0 4px 24px rgba(59,130,246,0.25);
+    box-shadow: 0 4px 20px rgba(6, 78, 59, 0.25);
+    border: 1px solid rgba(255,255,255,0.15);
 }
 .app-header h1 {
-    color: #fff !important;
+    color: #ffffff !important;
     font-size: 2rem !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
     margin: 0 0 8px 0 !important;
 }
 .app-header p {
-    color: rgba(255,255,255,0.88) !important;
+    color: #A7F3D0 !important;
     font-size: 0.95rem !important;
     margin: 0 !important;
+    font-weight: 500 !important;
 }
 
 /* ── Disclaimer ── */
 .disclaimer {
-    background: #FFF7ED;
-    border: 1px solid #FED7AA;
-    border-left: 4px solid #F97316;
+    background: #ECFDF5;
+    border: 1.5px solid #A7F3D0;
+    border-left: 5px solid #059669;
     border-radius: 10px;
-    padding: 10px 16px;
+    padding: 12px 18px;
     margin-bottom: 18px;
-    font-size: 0.84rem;
-    color: #9A3412;
+    font-size: 0.88rem;
+    color: #064E3B;
+    font-weight: 600;
 }
 
 /* ── Cards ── */
 .card {
     background: #FFFFFF;
-    border: 1px solid #E2E8F0;
+    border: 1.5px solid #D1FAE5;
     border-radius: 14px;
     padding: 20px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(5,150,105,0.06);
     margin-bottom: 14px;
 }
 
 /* ── Section labels ── */
 .section-label {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #64748B;
+    color: #065F46;
     margin-bottom: 10px;
 }
 
 /* ── Primary button ── */
 button.primary-btn, .primary-btn {
-    background: linear-gradient(135deg, #2563EB, #3B82F6) !important;
-    color: #fff !important;
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    color: #ffffff !important;
     border: none !important;
     border-radius: 10px !important;
-    font-weight: 600 !important;
+    font-weight: 800 !important;
     font-size: 1rem !important;
     padding: 12px 0 !important;
-    box-shadow: 0 4px 14px rgba(37,99,235,0.35) !important;
+    box-shadow: 0 4px 14px rgba(5,150,105,0.35) !important;
     transition: all 0.2s ease !important;
 }
 button.primary-btn:hover {
-    box-shadow: 0 6px 20px rgba(37,99,235,0.45) !important;
+    box-shadow: 0 6px 20px rgba(5,150,105,0.5) !important;
     transform: translateY(-1px) !important;
 }
 
 /* ── Tabs ── */
 .tab-nav button {
-    font-weight: 500 !important;
+    font-weight: 700 !important;
     border-radius: 8px 8px 0 0 !important;
+    color: #064E3B !important;
 }
 .tab-nav button.selected {
-    color: #2563EB !important;
-    border-bottom: 2px solid #2563EB !important;
+    color: #059669 !important;
+    border-bottom: 3px solid #059669 !important;
+    font-weight: 800 !important;
 }
 
 /* ── Provider badge ── */
 .provider-badge {
     display: inline-block;
-    background: #EFF6FF;
-    color: #1D4ED8;
-    border: 1px solid #BFDBFE;
+    background: #ECFDF5;
+    color: #047857;
+    border: 1.5px solid #A7F3D0;
     border-radius: 20px;
     padding: 4px 14px;
     font-size: 0.78rem;
-    font-weight: 600;
+    font-weight: 800;
     margin-top: 8px;
 }
 
 /* ── Footer ── */
 .app-footer {
     text-align: center;
-    color: #94A3B8;
+    color: #065F46;
     font-size: 0.8rem;
+    font-weight: 600;
     padding: 16px 0 4px 0;
-    border-top: 1px solid #E2E8F0;
+    border-top: 1.5px solid #D1FAE5;
     margin-top: 10px;
 }
 
 /* ── Inputs ── */
 textarea, input[type="text"] {
     border-radius: 10px !important;
-    border: 1px solid #CBD5E1 !important;
+    border: 1.5px solid #A7F3D0 !important;
     font-size: 0.9rem !important;
+    color: #0F291E !important;
 }
 textarea:focus, input[type="text"]:focus {
-    border-color: #3B82F6 !important;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 3px rgba(5,150,105,0.15) !important;
 }
 
 /* ── Summary output ── */
 .output-panel {
     background: #FFFFFF;
     border-radius: 12px;
-    border: 1px solid #E2E8F0;
+    border: 1.5px solid #D1FAE5;
     min-height: 200px;
+}
+
+/* ── Responsive Mobile & Tablet Adjustments ── */
+@media (max-width: 768px) {
+    .app-header h1 {
+        font-size: 1.3rem !important;
+        flex-wrap: wrap !important;
+    }
+    .app-header p {
+        font-size: 0.8rem !important;
+    }
+    .card {
+        padding: 14px !important;
+        margin-bottom: 12px !important;
+    }
+    .output-panel {
+        padding: 12px !important;
+        min-height: 150px !important;
+    }
 }
 """
 
@@ -447,8 +538,8 @@ def create_app() -> gr.Blocks:
                 gr.HTML('<div class="section-label">📄 Input Report</div>')
 
                 file_input = gr.File(
-                    label="Upload PDF or TXT",
-                    file_types=[".pdf", ".txt"],
+                    label="Upload PDF, Image, or TXT",
+                    file_types=[".pdf", ".txt", ".png", ".jpg", ".jpeg"],
                     file_count="single",
                     type="filepath",
                 )
@@ -541,17 +632,19 @@ def create_app() -> gr.Blocks:
 # ── Entry Point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    app = create_app()
-    app.launch(
-        share=False,
-        server_name="127.0.0.1",
-        server_port=7860,
-        show_error=True,
-        theme=gr.themes.Default(
-            primary_hue=gr.themes.colors.blue,
-            secondary_hue=gr.themes.colors.slate,
-            neutral_hue=gr.themes.colors.slate,
-            font=gr.themes.GoogleFont("Inter"),
-        ),
-        css=LIGHT_CSS,
-    )
+    import sys
+    import subprocess
+
+    print("🚀 Launching Medical Report AI Agent (Streamlit UI)...")
+    try:
+        subprocess.run([sys.executable, "-m", "streamlit", "run", "streamlit_app.py"])
+    except Exception as e:
+        print(f"Streamlit launch failed ({e}), starting Gradio backup...")
+        app = create_app()
+        app.launch(
+            share=False,
+            server_name="127.0.0.1",
+            server_port=7860,
+            show_error=True,
+            css=LIGHT_CSS,
+        )

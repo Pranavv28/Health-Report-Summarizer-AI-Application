@@ -49,6 +49,9 @@ Return ONLY a JSON object (no markdown, no extra text):
   "patient_age": "patient age if found, else null",
   "patient_gender": "patient gender if found, else null",
   "test_date": "report date if found, else null",
+  "report_type": "Lab|Imaging|Pathology|Other",
+  "ordered_by": "ordering clinician if found, else null",
+  "lab_facility": "lab or facility if found, else null",
   "patient_summary": "2-3 sentence summary only",
   "biomarkers": [
     {"parameter_name": "name", "value": "result", "unit": "unit", "reference_range": "range", "status": "Normal|High|Low|Critical", "simple_explanation": "one short sentence"}
@@ -58,8 +61,17 @@ Return ONLY a JSON object (no markdown, no extra text):
   "medications_or_treatment": ["relevant medications, clinical treatments, or drug considerations"],
   "questions_for_doctor": ["max 4 questions"],
   "lifestyle_wellness_educational_tips": ["max 4 lifestyle tips"],
-  "recommendations": ["max 4 clinical recommendations based on abnormal findings"]
+  "recommendations": ["max 4 clinical recommendations based on abnormal findings"],
+  "urgency_level": "Routine|Moderate|High|Critical/Emergency",
+  "red_flags": ["report-based urgent concerns only"],
+  "normal_findings": ["reassuring normal results"],
+  "recommended_specialists": [{"specialty": "specialty", "reason": "report-based reason", "timeline": "timeline", "what_to_expect": "brief consultation context"}],
+  "immediate_actions": ["safe non-prescriptive action for the next 24-48 hours"],
+  "one_week_actions": ["safe preparation action for the next week"]
 }
+
+Do not diagnose, prescribe, or advise starting or stopping medication. Do not invent
+values, facilities, clinicians, or clinical findings not present in the report.
 """
 
 HIGHLIGHTED_PROMPT = """

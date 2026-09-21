@@ -6,7 +6,7 @@ biomarkers, medical term translations, and summary modes
 (Brief, Detailed, Highlighted).
 """
 
-from typing import Optional, List, Any
+from typing import Any, Optional
 from pydantic import BaseModel, Field, model_validator, field_validator
 
 
@@ -58,6 +58,25 @@ class MedicalTermTranslation(BaseModel):
         return str(v)
 
 
+class SpecialistRecommendation(BaseModel):
+    """A non-diagnostic recommendation for an appropriate care specialty."""
+
+    specialty: str = Field(description="Medical specialty or care setting")
+    reason: str = Field(description="Report-based reason for the recommendation")
+    timeline: str = Field(description="Suggested follow-up timeline")
+    what_to_expect: str = Field(
+        default="",
+        description="Plain-language description of what the consultation may cover",
+    )
+
+    @field_validator(
+        "specialty", "reason", "timeline", "what_to_expect", mode="before"
+    )
+    @classmethod
+    def coerce_to_string(cls, v: Any) -> str:
+        return "" if v is None else str(v)
+
+
 class HealthReportAnalysis(BaseModel):
     """
     Complete structured analysis output from a medical report.
@@ -91,6 +110,18 @@ class HealthReportAnalysis(BaseModel):
         default=None,
         description="Date of the report or sample collection if mentioned"
     )
+    report_type: str = Field(
+        default="Other",
+        description="Report category: Lab, Imaging, Pathology, or Other",
+    )
+    ordered_by: Optional[str] = Field(
+        default=None,
+        description="Ordering clinician named in the report, when available",
+    )
+    lab_facility: Optional[str] = Field(
+        default=None,
+        description="Laboratory or facility named in the report, when available",
+    )
     patient_summary: str = Field(
         default="",
         description="Executive 2-3 sentence overview of the health report results"
@@ -123,8 +154,44 @@ class HealthReportAnalysis(BaseModel):
         default_factory=list,
         description="Alias for lifestyle_wellness_educational_tips — LLMs may return this key directly"
     )
+    urgency_level: str = Field(
+        default="Routine",
+        description="Routine, Moderate, High, or Critical/Emergency",
+    )
+    red_flags: list[str] = Field(
+        default_factory=list,
+        description="Potentially urgent report findings requiring prompt clinical review",
+    )
+    normal_findings: list[str] = Field(
+        default_factory=list,
+        description="Important normal or reassuring report findings",
+    )
+    recommended_specialists: list[SpecialistRecommendation] = Field(
+        default_factory=list,
+        description="Non-diagnostic, report-based specialist recommendations",
+    )
+    immediate_actions: list[str] = Field(
+        default_factory=list,
+        description="Safe, non-prescriptive actions for the next 24 to 48 hours",
+    )
+    one_week_actions: list[str] = Field(
+        default_factory=list,
+        description="Preparation or follow-up actions for the next week",
+    )
 
-    @field_validator("patient_name", "patient_age", "patient_gender", "test_date", "report_title", "patient_summary", mode="before")
+    @field_validator(
+        "patient_name",
+        "patient_age",
+        "patient_gender",
+        "test_date",
+        "report_title",
+        "patient_summary",
+        "report_type",
+        "ordered_by",
+        "lab_facility",
+        "urgency_level",
+        mode="before",
+    )
     @classmethod
     def coerce_opt_string(cls, v: Any) -> Optional[str]:
         if v is None:

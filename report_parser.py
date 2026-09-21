@@ -150,7 +150,12 @@ def parse_report(
         ReportParsingError: If parsing fails.
         ValueError: If file_type is unsupported.
     """
-    if file_type == "text" or isinstance(source, str):
+    if file_type not in ("text", "pdf"):
+        raise ValueError(
+            f"Unsupported file type: '{file_type}'. Supported types: 'text', 'pdf'."
+        )
+
+    if file_type == "text":
         text = source if isinstance(source, str) else source.decode("utf-8", errors="ignore")
         return parse_text_input(text)
 
@@ -161,6 +166,9 @@ def parse_report(
             logger.warning("PDF text extraction returned empty; document may be image-based.")
             return ""
         return extracted
+
+    if file_type == "pdf" and isinstance(source, str):
+        return parse_text_input(source)
 
     raise ValueError(
         f"Unsupported file type: '{file_type}'. Supported types: 'text', 'pdf'."

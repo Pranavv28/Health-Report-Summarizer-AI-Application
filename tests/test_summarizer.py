@@ -54,18 +54,22 @@ class TestSummaryModeConfig:
 class TestMedicalSummarizerValidation:
     """Tests for input validation without requiring API credentials."""
 
+    @patch("medical_summarizer.is_groq_configured", return_value=False)
     @patch("medical_summarizer.is_anthropic_configured", return_value=False)
     @patch("medical_summarizer.is_api_key_configured", return_value=False)
-    def test_no_provider_raises(self, mock_gemini: Any, mock_claude: Any) -> None:
+    def test_no_provider_raises(
+        self, mock_gemini: Any, mock_claude: Any, mock_groq: Any
+    ) -> None:
         """Test that initialization fails when no provider is configured."""
         with pytest.raises(ValueError, match="No AI provider configured"):
             MedicalSummarizer()
 
+    @patch("medical_summarizer.is_groq_configured", return_value=False)
     @patch("medical_summarizer.is_anthropic_configured", return_value=False)
     @patch("medical_summarizer.is_api_key_configured", return_value=True)
     @patch("medical_summarizer.get_anthropic_api_key", return_value=None)
     def test_gemini_fallback_init(
-        self, mock_key: Any, mock_gemini: Any, mock_claude: Any
+        self, mock_key: Any, mock_gemini: Any, mock_claude: Any, mock_groq: Any
     ) -> None:
         """Test that Gemini fallback initializes when Claude is not available."""
         try:
