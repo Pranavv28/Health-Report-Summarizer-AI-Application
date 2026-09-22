@@ -431,65 +431,116 @@ CSS = """
         flex-shrink: 0;
     }
 
-    /* ─── High Contrast Green BaseWeb Tabs ─── */
-    .stTabs [data-baseweb="tab-list"] {
+    /* ─── Streamlit Tabs Container & Tab List ─── */
+    div[data-baseweb="tab-list"],
+    [data-testid="stTabList"],
+    [role="tablist"] {
         gap: 8px !important;
         background: #e6f4ea !important;
         padding: 6px !important;
         border-radius: 12px !important;
         border: 1.5px solid #a7f3d0 !important;
         margin-bottom: 16px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
     }
-    .stTabs [data-baseweb="tab"],
-    .stTabs button[role="tab"] {
-        height: 44px !important;
+
+    /* Tab Button (Base / Inactive) */
+    button[data-baseweb="tab"],
+    [data-testid="stTab"],
+    div[data-baseweb="tab-list"] button[role="tab"],
+    [role="tablist"] button[role="tab"] {
+        height: 42px !important;
+        min-height: 42px !important;
         border-radius: 10px !important;
-        padding: 0 18px !important;
+        padding: 6px 18px !important;
+        background-color: #ffffff !important;
         background: #ffffff !important;
         border: 1.5px solid #a7f3d0 !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.03) !important;
         transition: all 0.15s ease !important;
+        cursor: pointer !important;
     }
-    .stTabs [data-baseweb="tab"] *,
-    .stTabs button[role="tab"] *,
-    .stTabs [data-baseweb="tab"] p,
-    .stTabs [data-baseweb="tab"] span,
-    .stTabs [data-baseweb="tab"] div,
-    div[data-baseweb="tab-list"] button p,
-    div[data-baseweb="tab-list"] button span,
-    div[data-baseweb="tab-list"] button div {
+
+    /* Tab Button Text & Icons (Inactive) */
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span,
+    button[data-baseweb="tab"] div,
+    [data-testid="stTab"] p,
+    [data-testid="stTab"] span,
+    [data-testid="stTab"] div,
+    div[data-baseweb="tab-list"] button[role="tab"] p,
+    div[data-baseweb="tab-list"] button[role="tab"] span,
+    div[data-baseweb="tab-list"] button[role="tab"] div,
+    [role="tablist"] button[role="tab"] p,
+    [role="tablist"] button[role="tab"] span,
+    [role="tablist"] button[role="tab"] div {
         color: #064e3b !important;
         -webkit-text-fill-color: #064e3b !important;
         font-weight: 800 !important;
         font-size: 0.95rem !important;
         opacity: 1 !important;
+        pointer-events: none !important;
     }
-    .stTabs [data-baseweb="tab"]:hover,
-    .stTabs button[role="tab"]:hover {
+
+    /* Tab Hover */
+    button[data-baseweb="tab"]:hover,
+    [data-testid="stTab"]:hover,
+    div[data-baseweb="tab-list"] button[role="tab"]:hover,
+    [role="tablist"] button[role="tab"]:hover {
+        background-color: #f0fdf4 !important;
         background: #f0fdf4 !important;
         border-color: #059669 !important;
     }
-    .stTabs [aria-selected="true"],
-    .stTabs button[role="tab"][aria-selected="true"] {
+
+    /* Tab Button (Active / Selected) */
+    button[data-baseweb="tab"][aria-selected="true"],
+    [data-testid="stTab"][aria-selected="true"],
+    div[data-baseweb="tab-list"] button[role="tab"][aria-selected="true"],
+    [role="tablist"] button[role="tab"][aria-selected="true"] {
+        background-color: #047857 !important;
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-        border-color: #059669 !important;
+        border-color: #047857 !important;
         box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35) !important;
     }
-    .stTabs [aria-selected="true"] *,
-    .stTabs button[role="tab"][aria-selected="true"] *,
-    .stTabs [aria-selected="true"] p,
-    .stTabs [aria-selected="true"] span,
-    .stTabs [aria-selected="true"] div,
-    div[data-baseweb="tab-list"] button[aria-selected="true"] p,
-    div[data-baseweb="tab-list"] button[aria-selected="true"] span,
-    div[data-baseweb="tab-list"] button[aria-selected="true"] div {
+
+    /* Tab Button Text & Icons (Active / Selected) */
+    button[data-baseweb="tab"][aria-selected="true"] p,
+    button[data-baseweb="tab"][aria-selected="true"] span,
+    button[data-baseweb="tab"][aria-selected="true"] div,
+    [data-testid="stTab"][aria-selected="true"] p,
+    [data-testid="stTab"][aria-selected="true"] span,
+    [data-testid="stTab"][aria-selected="true"] div,
+    div[data-baseweb="tab-list"] button[role="tab"][aria-selected="true"] p,
+    div[data-baseweb="tab-list"] button[role="tab"][aria-selected="true"] span,
+    div[data-baseweb="tab-list"] button[role="tab"][aria-selected="true"] div,
+    [role="tablist"] button[role="tab"][aria-selected="true"] p,
+    [role="tablist"] button[role="tab"][aria-selected="true"] span,
+    [role="tablist"] button[role="tab"][aria-selected="true"] div {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
         font-weight: 800 !important;
         font-size: 0.95rem !important;
         opacity: 1 !important;
+        pointer-events: none !important;
     }
-    .stTabs [data-baseweb="tab-border"] { display: none !important; }
+
+    /* Tab Panel Content Container */
+    div[data-baseweb="tab-panel"],
+    div[role="tabpanel"],
+    [data-testid="stTabContent"] {
+        width: 100% !important;
+        padding-top: 8px !important;
+        display: block !important;
+    }
+
+    /* Hide default indicator underline bar */
+    [data-baseweb="tab-border"],
+    div[data-baseweb="tab-highlight"],
+    [data-testid="stTabHighlight"] {
+        display: none !important;
+    }
 
     /* ─── Radio Button High-Contrast Fix ─── */
     [data-testid="stRadio"] label,
@@ -692,7 +743,9 @@ CSS = """
 
     /* BaseWeb Tabs horizontal touch scrolling on mobile devices */
     @media (max-width: 768px) {
-        .stTabs [data-baseweb="tab-list"] {
+        div[data-testid="stTabList"],
+        div[data-baseweb="tab-list"],
+        [role="tablist"] {
             overflow-x: auto !important;
             flex-wrap: nowrap !important;
             -webkit-overflow-scrolling: touch !important;
@@ -700,8 +753,10 @@ CSS = """
             max-width: 100% !important;
             white-space: nowrap !important;
         }
-        .stTabs [data-baseweb="tab"],
-        .stTabs button[role="tab"] {
+        button[data-baseweb="tab"],
+        [data-testid="stTab"],
+        div[data-baseweb="tab-list"] button[role="tab"],
+        [role="tablist"] button[role="tab"] {
             flex: 0 0 auto !important;
             padding: 0 12px !important;
             font-size: 0.85rem !important;
