@@ -1,4 +1,5 @@
 import time
+import json
 import streamlit as st
 import pandas as pd
 
@@ -6,6 +7,10 @@ from config import get_active_provider, SAMPLE_REPORTS
 from schema import HealthReportAnalysis, Biomarker
 from medical_summarizer import MedicalSummarizer
 from exporter import generate_pdf_report
+import auth as _auth
+
+# Initialise the SQLite database (idempotent)
+_auth.init_db()
 
 # Page Config
 st.set_page_config(
@@ -52,9 +57,22 @@ CSS = """
     }
 
     /* ─── Global Reset & Clean Streamlit Overrides ─── */
-    html, body, [class*="css"] {
+    html, body, [class*="css"], [data-testid="stAppViewContainer"] {
         font-family: var(--font-body);
         color: var(--text-dark);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-display) !important;
+        letter-spacing: -0.02em;
+    }
+
+    button, .stButton>button, .stDownloadButton>button {
+        font-family: var(--font-display) !important;
+    }
+
+    input, textarea, select {
+        font-family: var(--font-body) !important;
     }
 
     .stApp {
@@ -631,34 +649,64 @@ CSS = """
         background: #f0fdf4 !important;
     }
 
-    /* ─── Left Intake Panel: Sticky Sidebar ─── */
-    [data-testid="stHorizontalBlock"] > div:first-child,
-    [data-testid="column"]:first-child,
-    div[data-testid="stColumn"]:first-child {
+    /* ─── Left Intake Panel: Robust Sticky Sidebar ─── */
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > div:first-child,
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > [data-testid="column"]:first-child {
         position: sticky !important;
         top: 1rem !important;
         align-self: flex-start !important;
         max-height: calc(100vh - 2rem) !important;
         overflow-y: auto !important;
-        padding-right: 4px !important;
+        padding-right: 6px !important;
     }
 
     /* Custom subtle thin scrollbar for sticky left intake panel */
-    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar,
-    [data-testid="column"]:first-child::-webkit-scrollbar,
-    div[data-testid="stColumn"]:first-child::-webkit-scrollbar {
-        width: 4px;
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > div:first-child::-webkit-scrollbar,
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > [data-testid="column"]:first-child::-webkit-scrollbar {
+        width: 5px;
     }
-    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar-track,
-    [data-testid="column"]:first-child::-webkit-scrollbar-track,
-    div[data-testid="stColumn"]:first-child::-webkit-scrollbar-track {
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > div:first-child::-webkit-scrollbar-track,
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > [data-testid="column"]:first-child::-webkit-scrollbar-track {
         background: transparent;
     }
-    [data-testid="stHorizontalBlock"] > div:first-child::-webkit-scrollbar-thumb,
-    [data-testid="column"]:first-child::-webkit-scrollbar-thumb,
-    div[data-testid="stColumn"]:first-child::-webkit-scrollbar-thumb {
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > div:first-child::-webkit-scrollbar-thumb,
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > [data-testid="column"]:first-child::-webkit-scrollbar-thumb {
         background: #a7f3d0;
-        border-radius: 4px;
+        border-radius: 999px;
+    }
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > div:first-child::-webkit-scrollbar-thumb:hover,
+    [data-testid="stHorizontalBlock"]:has(.intake-panel-anchor) > [data-testid="column"]:first-child::-webkit-scrollbar-thumb:hover {
+        background: #059669;
+    }
+
+    /* ─── Streamlit Form & Text Input High-Quality Polish ─── */
+    div[data-testid="stForm"] {
+        background: #ffffff !important;
+        border: 1.5px solid #d1fae5 !important;
+        border-radius: 18px !important;
+        padding: 24px 28px !important;
+        box-shadow: 0 8px 28px rgba(5, 150, 105, 0.08) !important;
+    }
+    div[data-testid="stTextInput"] > div > div {
+        background: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stTextInput"] input {
+        color: #0f291e !important;
+        font-family: var(--font-body) !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stTextInput"] > div > div:focus-within {
+        border-color: #059669 !important;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2) !important;
+    }
+    [data-testid="stAlert"] {
+        border-radius: 12px !important;
+        font-family: var(--font-body) !important;
+        font-weight: 600 !important;
     }
 
     /* ─── Empty State Placeholder ─── */
@@ -675,21 +723,73 @@ CSS = """
         margin-bottom: 12px;
     }
 
-    /* ─── High Contrast Spinner & Status Widget Fix ─── */
+    /* ─── Streamlit Header Status Widget & 'Source file changed' Toolbar ─── */
     [data-testid="stStatusWidget"],
+    [data-testid="stToolbar"],
+    [data-testid="stAppToolbar"],
+    div[class*="stStatusWidget"] {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+        border: 2px solid #059669 !important;
+        border-radius: 12px !important;
+        padding: 8px 16px !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+        z-index: 999999 !important;
+    }
+    [data-testid="stStatusWidget"] p,
+    [data-testid="stStatusWidget"] span,
+    [data-testid="stStatusWidget"] div,
+    [data-testid="stToolbar"] p,
+    [data-testid="stToolbar"] span,
+    [data-testid="stToolbar"] div {
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 0.92rem !important;
+    }
+
+    /* Buttons inside the "Source file changed" widget ("Always rerun", "Rerun") */
+    [data-testid="stStatusWidget"] button,
+    [data-testid="stToolbar"] button,
+    header[data-testid="stHeader"] button {
+        background: #059669 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        border: 1px solid #047857 !important;
+        border-radius: 8px !important;
+        padding: 5px 14px !important;
+        font-weight: 800 !important;
+        font-size: 0.88rem !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3) !important;
+    }
+    [data-testid="stStatusWidget"] button:hover,
+    [data-testid="stToolbar"] button:hover,
+    header[data-testid="stHeader"] button:hover {
+        background: #047857 !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+    }
+    [data-testid="stStatusWidget"] button *,
+    [data-testid="stToolbar"] button *,
+    header[data-testid="stHeader"] button * {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        font-weight: 800 !important;
+    }
+
+    /* ─── High Contrast Spinner ─── */
     [data-testid="stSpinner"],
     .stSpinner {
         color: #064e3b !important;
-        background-color: #ffffff !important;
+        background-color: #f0fdf4 !important;
         border: 1.5px solid #a7f3d0 !important;
         border-radius: 12px !important;
         padding: 12px 18px !important;
         margin: 12px 0 !important;
         box-shadow: 0 4px 12px rgba(5,150,105,0.08) !important;
     }
-    [data-testid="stStatusWidget"] p,
-    [data-testid="stStatusWidget"] span,
-    [data-testid="stStatusWidget"] div,
     [data-testid="stSpinner"] p,
     [data-testid="stSpinner"] span,
     [data-testid="stSpinner"] div,
@@ -697,7 +797,7 @@ CSS = """
     .stSpinner span,
     .stSpinner div {
         color: #064e3b !important;
-        font-weight: 800 !important;
+        font-weight: 700 !important;
         font-size: 0.95rem !important;
     }
 
@@ -828,6 +928,92 @@ CSS = """
             min-height: 44px !important;
         }
     }
+
+    /* ─── Auth Page Styles ─── */
+    .auth-card-header {
+        text-align: center;
+        padding: 24px 16px 14px;
+        margin-bottom: 8px;
+    }
+    .auth-logo-icon {
+        font-size: 2.6rem;
+        display: inline-block;
+        background: linear-gradient(135deg, #059669, #047857);
+        border-radius: 18px;
+        width: 66px; height: 66px;
+        line-height: 66px;
+        text-align: center;
+        box-shadow: 0 8px 22px rgba(5,150,105,0.32);
+        margin-bottom: 14px;
+    }
+    .auth-title {
+        font-family: var(--font-display);
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #064e3b;
+        letter-spacing: -0.025em;
+        margin: 0 0 6px;
+        text-align: center;
+    }
+    .auth-subtitle {
+        font-size: 0.92rem;
+        color: #065f46;
+        font-weight: 600;
+        text-align: center;
+        margin: 0;
+    }
+    /* Logged-in user badge in nav */
+    .user-badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.18);
+        border: 1.5px solid rgba(255,255,255,0.30);
+        border-radius: 999px;
+        padding: 6px 16px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #ffffff;
+        backdrop-filter: blur(4px);
+    }
+    .user-badge-avatar {
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        background: #10b981;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #ffffff;
+        flex-shrink: 0;
+    }
+    /* History report cards */
+    .history-card {
+        background: #ffffff;
+        border: 1.5px solid #d1fae5;
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .history-card:hover {
+        border-color: #059669;
+        box-shadow: 0 4px 12px rgba(5,150,105,0.12);
+    }
+    .history-card-title {
+        font-family: var(--font-display);
+        font-size: 0.97rem;
+        font-weight: 800;
+        color: #064e3b;
+        margin-bottom: 4px;
+    }
+    .history-card-meta {
+        font-size: 0.8rem;
+        color: #065f46;
+        font-weight: 600;
+    }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -922,6 +1108,123 @@ if "uploaded_file_name" not in st.session_state:
 if "uploaded_file_type" not in st.session_state:
     st.session_state.uploaded_file_type = "pdf"
 
+# ── Auth session keys ──
+if "jwt_token" not in st.session_state:
+    st.session_state.jwt_token = None
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None   # {id, name, email}
+if "auth_tab" not in st.session_state:
+    st.session_state.auth_tab = "login"    # "login" | "signup"
+if "history_loaded" not in st.session_state:
+    st.session_state.history_loaded = False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JWT VERIFICATION — restore user from existing token
+# ─────────────────────────────────────────────────────────────────────────────
+if st.session_state.jwt_token and st.session_state.current_user is None:
+    payload = _auth.verify_jwt(st.session_state.jwt_token)
+    if payload:
+        st.session_state.current_user = {
+            "id": int(payload["sub"]),
+            "name": payload["name"],
+            "email": payload["email"],
+        }
+    else:
+        # Token expired / invalid — clear it
+        st.session_state.jwt_token = None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AUTH GATE — show Login / Sign Up page if not authenticated
+# ─────────────────────────────────────────────────────────────────────────────
+if st.session_state.current_user is None:
+
+    # Centered authentication column
+    _, auth_col, _ = st.columns([1, 1.4, 1])
+    with auth_col:
+        st_html("""
+        <div class="auth-card-header">
+            <div class="auth-logo-icon">🩺</div>
+            <div class="auth-title">Health Report AI</div>
+            <p class="auth-subtitle">Conversational Health Diagnostics &bull; Secure User Portal</p>
+        </div>
+        """)
+
+        tab_login, tab_signup = st.tabs(["🔑 Sign In", "✨ Create Account"])
+
+        # ── LOGIN ──
+        with tab_login:
+            with st.form("login_form", clear_on_submit=False):
+                st.markdown("<p style='font-size:0.88rem;font-weight:700;color:#064e3b;margin:0 0 6px;'>Email Address</p>", unsafe_allow_html=True)
+                login_email = st.text_input("Email", placeholder="you@example.com", label_visibility="collapsed", key="li_email")
+                st.markdown("<p style='font-size:0.88rem;font-weight:700;color:#064e3b;margin:14px 0 6px;'>Password</p>", unsafe_allow_html=True)
+                login_pw = st.text_input("Password", type="password", placeholder="••••••••", label_visibility="collapsed", key="li_pw")
+                st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+                login_btn = st.form_submit_button("🔑 Sign In to Portal", use_container_width=True, type="primary")
+
+            if login_btn:
+                if not login_email.strip() or not login_pw:
+                    st.error("Please enter your email and password.")
+                else:
+                    user = _auth.authenticate_user(login_email.strip(), login_pw)
+                    if user is None:
+                        st.error("❌ Invalid email or password. Please try again.")
+                    else:
+                        token = _auth.create_jwt(user["id"], user["email"], user["name"])
+                        st.session_state.jwt_token = token
+                        st.session_state.current_user = user
+                        st.session_state.history_loaded = False
+                        st.success(f"✅ Welcome back, {user['name']}!")
+                        st.rerun()
+
+        # ── SIGN UP ──
+        with tab_signup:
+            with st.form("signup_form", clear_on_submit=False):
+                st.markdown("<p style='font-size:0.88rem;font-weight:700;color:#064e3b;margin:0 0 6px;'>Full Name</p>", unsafe_allow_html=True)
+                su_name = st.text_input("Full Name", placeholder="Jane Doe", label_visibility="collapsed", key="su_name")
+                st.markdown("<p style='font-size:0.88rem;font-weight:700;color:#064e3b;margin:14px 0 6px;'>Email Address</p>", unsafe_allow_html=True)
+                su_email = st.text_input("Email", placeholder="you@example.com", label_visibility="collapsed", key="su_email")
+                st.markdown("<p style='font-size:0.88rem;font-weight:700;color:#064e3b;margin:14px 0 6px;'>Password</p>", unsafe_allow_html=True)
+                su_pw = st.text_input("Password", type="password", placeholder="Min. 8 characters", label_visibility="collapsed", key="su_pw")
+                st.markdown("<p style='font-size:0.88rem;font-weight:700;color:#064e3b;margin:14px 0 6px;'>Confirm Password</p>", unsafe_allow_html=True)
+                su_pw2 = st.text_input("Confirm Password", type="password", placeholder="Repeat password", label_visibility="collapsed", key="su_pw2")
+                st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+                signup_btn = st.form_submit_button("✨ Create Free Account", use_container_width=True, type="primary")
+
+            if signup_btn:
+                errors = []
+                if not su_name.strip():
+                    errors.append("Name is required.")
+                if "@" not in su_email or "." not in su_email:
+                    errors.append("Enter a valid email address.")
+                if len(su_pw) < 8:
+                    errors.append("Password must be at least 8 characters.")
+                if su_pw != su_pw2:
+                    errors.append("Passwords do not match.")
+                if errors:
+                    for err in errors:
+                        st.error(err)
+                else:
+                    result = _auth.create_user(su_name.strip(), su_email.strip(), su_pw)
+                    if result["ok"]:
+                        user = result["user"]
+                        token = _auth.create_jwt(user["id"], user["email"], user["name"])
+                        st.session_state.jwt_token = token
+                        st.session_state.current_user = user
+                        st.session_state.history_loaded = False
+                        st.success(f"🎉 Account created! Welcome, {user['name']}!")
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {result['error']}")
+
+    st.stop()   # Don't render the main app until authenticated
+
+
+# ── From here on the user is authenticated ──
+_current_user: dict = st.session_state.current_user
+
+
 # Provider detection
 active_provider = get_active_provider()
 provider_display_name = {
@@ -953,6 +1256,7 @@ if active_provider == "none":
 # ─────────────────────────────────────────────────────────────────────────────
 # TOP JOTFORM NAVIGATION BAR
 # ─────────────────────────────────────────────────────────────────────────────
+_user_initials = "".join(w[0].upper() for w in _current_user["name"].split()[:2])
 st_html(f"""
 <div class="jotform-nav">
   <div class="jotform-brand">
@@ -961,16 +1265,31 @@ st_html(f"""
       <div class="jotform-brand-title">
         Jotform AI Agents <span class="jotform-brand-tag">MEDICAL AGENT</span>
       </div>
-      <p class="jotform-brand-subtitle">Medical Report AI Agent — Conversational Health Diagnostics & Telemetry</p>
+      <p class="jotform-brand-subtitle">Medical Report AI Agent — Conversational Health Diagnostics &amp; Telemetry</p>
     </div>
   </div>
   <div class="jotform-status-badges">
     <span class="jf-badge jf-badge-active"><span class="live-dot"></span> AI Agent Active</span>
     <span class="jf-badge">🔒 HIPAA Compliant</span>
     <span class="jf-badge">⚡ {provider_display_name}</span>
+    <span class="user-badge-pill">
+      <span class="user-badge-avatar">{_user_initials}</span>
+      {_current_user["name"]}
+    </span>
   </div>
 </div>
 """)
+
+# Sign-Out button (right-aligned)
+_signout_spacer, _signout_col = st.columns([6, 1])
+with _signout_col:
+    if st.button("🚪 Sign Out", use_container_width=True, key="signout_btn"):
+        st.session_state.jwt_token = None
+        st.session_state.current_user = None
+        st.session_state.analysis_result = None
+        st.session_state.chat_history = []
+        st.session_state.history_loaded = False
+        st.rerun()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1009,7 +1328,7 @@ col_intake, col_output = st.columns([1, 1.4], gap="large")
 # ══════════════════════════════════════════════════════════════════════════════
 with col_intake:
     st_html("""
-    <div style="background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+    <div class="intake-panel-anchor" style="background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
                 border-radius:14px; padding:16px 20px; margin-bottom:16px;
                 border:1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 14px rgba(6,78,59,0.25);">
         <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -1177,6 +1496,19 @@ with col_intake:
 
                         st.session_state.analysis_result = analysis
                         st.session_state.chat_history = []
+
+                        # ── Auto-save to user memory ──
+                        try:
+                            _auth.save_report(
+                                user_id=_current_user["id"],
+                                title=analysis.report_title or "Health Report",
+                                summary_json=analysis.model_dump_json(),
+                                findings_count=len(analysis.biomarkers),
+                            )
+                            st.session_state.history_loaded = False  # force refresh
+                        except Exception as _save_err:
+                            pass  # non-blocking — don't fail the analysis
+
                         st.success(f"✅ {summary_type} Analysis Complete!")
                         st.rerun()
                     except Exception as err:
@@ -1208,6 +1540,56 @@ with col_output:
             </p>
         </div>
         """)
+
+        # Quick access to user's saved report memory
+        saved_history = _auth.get_report_history(_current_user["id"])
+        if saved_history:
+            st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
+            st_html(f"""
+            <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; padding:14px 18px; margin-bottom:14px;">
+                <h4 style="font-family:var(--font-display); font-size:1.05rem; font-weight:700; color:#0a1526; margin:0 0 4px; display:flex; align-items:center; gap:8px;">
+                    📂 Saved Reports Memory ({len(saved_history)})
+                </h4>
+                <p style="font-size:0.85rem; color:#475569; margin:0;">
+                    Your previously analyzed reports — click <strong>Restore</strong> to view full diagnostics.
+                </p>
+            </div>
+            """)
+            for rec in saved_history:
+                try:
+                    import datetime as _dt
+                    dt_obj = _dt.datetime.fromisoformat(rec["created_at"])
+                    date_str = dt_obj.strftime("%b %d, %Y — %H:%M UTC")
+                except Exception:
+                    date_str = rec["created_at"][:16]
+
+                hcol1, hcol2 = st.columns([5, 1])
+                with hcol1:
+                    st_html(f"""
+                    <div class="history-card">
+                        <div class="history-card-title">📋 {rec['title']}</div>
+                        <div class="history-card-meta">
+                            🕐 {date_str} &nbsp;·&nbsp;
+                            🔬 {rec['findings_count']} biomarker(s) extracted
+                        </div>
+                    </div>
+                    """)
+                    if st.button("📂 Restore", key=f"restore_home_{rec['id']}", use_container_width=True):
+                        try:
+                            full_rec = _auth.get_report_by_id(rec["id"], _current_user["id"])
+                            if full_rec:
+                                restored = HealthReportAnalysis.model_validate_json(full_rec["summary_json"])
+                                st.session_state.analysis_result = restored
+                                st.session_state.chat_history = []
+                                st.toast(f"✅ Restored: {rec['title']}", icon="📂")
+                                st.rerun()
+                        except Exception as _re:
+                            st.error(f"Could not restore: {_re}")
+                with hcol2:
+                    if st.button("🗑️", key=f"del_home_{rec['id']}", help="Delete this report", use_container_width=True):
+                        _auth.delete_report(rec["id"], _current_user["id"])
+                        st.toast("🗑️ Report deleted.", icon="🗑️")
+                        st.rerun()
 
     elif not analysis.is_valid_report:
         st_html(f"""
@@ -1297,12 +1679,13 @@ with col_output:
         """)
 
         # Tabbed Views: Structured Sections
-        out_tab1, out_tab2, out_tab3, out_tab4, out_tab5 = st.tabs([
+        out_tab1, out_tab2, out_tab3, out_tab4, out_tab5, out_tab6 = st.tabs([
             "⚠️ Abnormal Values",
             "🩺 Key Findings",
             "🔬 Biomarker Telemetry",
             "💊 Treatment & Guidance",
-            "🤖 Ask AI Agent"
+            "🤖 Ask AI Agent",
+            "📂 My Reports",
         ])
 
         with out_tab1:
@@ -1429,15 +1812,84 @@ with col_output:
                     st.session_state.chat_history.append({"role": "assistant", "content": reply})
                 st.rerun()
 
-        # ── EXPORT ACTION BUTTONS ──
+        with out_tab6:
+            # ── MY REPORTS (memory / history) ──
+            st_html("""
+            <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; padding:14px 18px; margin-bottom:14px;">
+                <h4 style="font-family:var(--font-display); font-size:1.05rem; font-weight:700; color:#0a1526; margin:0 0 4px; display:flex; align-items:center; gap:8px;">
+                    📂 My Report History
+                </h4>
+                <p style="font-size:0.85rem; color:#475569; margin:0;">
+                    Your last 50 analyses — click a card to restore that report.
+                </p>
+            </div>
+            """)
+
+            if not st.session_state.history_loaded:
+                st.session_state._report_history = _auth.get_report_history(_current_user["id"])
+                st.session_state.history_loaded = True
+
+            history_records = st.session_state.get("_report_history", [])
+
+            if st.button("🔄 Refresh History", key="refresh_history"):
+                st.session_state._report_history = _auth.get_report_history(_current_user["id"])
+                st.session_state.history_loaded = True
+                st.rerun()
+
+            if not history_records:
+                st_html("""
+                <div style="text-align:center; padding:40px 10px; color:#64748b; font-size:0.9rem;">
+                    📭 No saved reports yet. Analyze a report to start building your history!
+                </div>
+                """)
+            else:
+                for rec in history_records:
+                    # Parse date nicely
+                    try:
+                        import datetime as _dt
+                        dt_obj = _dt.datetime.fromisoformat(rec["created_at"])
+                        date_str = dt_obj.strftime("%b %d, %Y — %H:%M UTC")
+                    except Exception:
+                        date_str = rec["created_at"][:16]
+
+                    hcol1, hcol2 = st.columns([5, 1])
+                    with hcol1:
+                        st_html(f"""
+                        <div class="history-card">
+                            <div class="history-card-title">📋 {rec['title']}</div>
+                            <div class="history-card-meta">
+                                🕐 {date_str} &nbsp;·&nbsp;
+                                🔬 {rec['findings_count']} biomarker(s) extracted
+                            </div>
+                        </div>
+                        """)
+                        if st.button(f"📂 Restore", key=f"restore_{rec['id']}", use_container_width=True):
+                            try:
+                                full_rec = _auth.get_report_by_id(rec["id"], _current_user["id"])
+                                if full_rec:
+                                    restored = HealthReportAnalysis.model_validate_json(full_rec["summary_json"])
+                                    st.session_state.analysis_result = restored
+                                    st.session_state.chat_history = []
+                                    st.toast(f"✅ Restored: {rec['title']}", icon="📂")
+                                    st.rerun()
+                            except Exception as _re:
+                                st.error(f"Could not restore: {_re}")
+                    with hcol2:
+                        if st.button("🗑️", key=f"del_{rec['id']}", help="Delete this report", use_container_width=True):
+                            _auth.delete_report(rec["id"], _current_user["id"])
+                            st.session_state._report_history = _auth.get_report_history(_current_user["id"])
+                            st.toast("🗑️ Report deleted.", icon="🗑️")
+                            st.rerun()
+
+        # ── EXPORT ACTION BUTTONS & WORKSPACE RESET ──
         st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size:0.85rem; font-weight:700; color:#334155; margin-bottom:8px;'>📥 Export Report Data:</p>", unsafe_allow_html=True)
-        ex_col1, ex_col2, ex_col3 = st.columns(3)
+        st.markdown("<p style='font-size:0.85rem; font-weight:700; color:#334155; margin-bottom:8px;'>📥 Export Report Data & Actions:</p>", unsafe_allow_html=True)
+        ex_col1, ex_col2, ex_col3, ex_col4 = st.columns(4)
         with ex_col1:
             try:
                 pdf_bytes = generate_pdf_report(analysis)
                 st.download_button(
-                    label="📥 Export as PDF",
+                    label="📥 Export PDF",
                     data=pdf_bytes,
                     file_name="Medical_Report_Summary.pdf",
                     mime="application/pdf",
@@ -1448,7 +1900,7 @@ with col_output:
         with ex_col2:
             json_bytes = analysis.model_dump_json(indent=2)
             st.download_button(
-                label="📋 Export as JSON",
+                label="📋 Export JSON",
                 data=json_bytes,
                 file_name="Medical_Report_Data.json",
                 mime="application/json",
@@ -1461,10 +1913,16 @@ with col_output:
             if analysis.questions_for_doctor:
                 md_lines.append("\n## Doctor Questions\n" + "\n".join(f"- {q}" for q in analysis.questions_for_doctor))
             st.download_button(
-                label="📝 Export as Markdown",
+                label="📝 Export MD",
                 data="\n".join(md_lines),
                 file_name="Medical_Report_Summary.md",
                 mime="text/markdown",
                 use_container_width=True
             )
+        with ex_col4:
+            if st.button("➕ New Analysis", use_container_width=True, help="Clear active report view and start a new analysis"):
+                st.session_state.analysis_result = None
+                st.session_state.chat_history = []
+                st.session_state.history_loaded = False
+                st.rerun()
 

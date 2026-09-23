@@ -12,4 +12,7 @@ Thumbs.db
 .idea/
 .pytest_cache/
 scratch/
-
+.jwt_secret
+*.db
+*.db-wal
+*.db-shm
